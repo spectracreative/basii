@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, LogOut } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
 import TodoList from './components/TodoList';
@@ -144,50 +145,82 @@ const App = () => {
         </div>
       </header>
 
-      <main>
-        {currentPage === 'dashboard' ? (
-          <>
-            {/* Deadline Alerts (Global, not filtered by month) */}
-            <DeadlineAlerts projects={projects} />
+      <main style={{ position: 'relative' }}>
+        <AnimatePresence mode="wait">
+          {currentPage === 'dashboard' ? (
+            <motion.div 
+              key="dashboard"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Deadline Alerts (Global, not filtered by month) */}
+              <DeadlineAlerts projects={projects} />
 
-            {/* Analytics Section */}
-            <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
+              {/* Analytics Section */}
+              <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
 
-            <Dashboard transactions={transactions} selectedMonth={selectedMonth} />
-            
-            {/* Finance and Tasks */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
-              <div style={{ flex: 1 }}>
-                <Transactions transactions={transactions} setTransactions={setTransactions} session={session} selectedMonth={selectedMonth} />
+              <Dashboard transactions={transactions} selectedMonth={selectedMonth} />
+              
+              {/* Finance and Tasks */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <Transactions transactions={transactions} setTransactions={setTransactions} session={session} selectedMonth={selectedMonth} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TodoList todos={todos} setTodos={setTodos} session={session} />
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <TodoList todos={todos} setTodos={setTodos} session={session} />
-              </div>
-            </div>
-          </>
-        ) : currentPage === 'projects' ? (
-          <Projects 
-            projects={projects} 
-            setProjects={setProjects} 
-            clients={clients} 
-            setClients={setClients} 
-            session={session} 
-            selectedMonth={selectedMonth} 
-            onPaymentReceived={handleAutoAddTransaction}
-          />
-        ) : currentPage === 'add' ? (
-          <AddData 
-            session={session} 
-            transactions={transactions} 
-            setTransactions={setTransactions} 
-            projects={projects} 
-            setProjects={setProjects} 
-            clients={clients} 
-            setClients={setClients} 
-          />
-        ) : (
-          <Earnings transactions={transactions} />
-        )}
+            </motion.div>
+          ) : currentPage === 'projects' ? (
+            <motion.div 
+              key="projects"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Projects 
+                projects={projects} 
+                setProjects={setProjects} 
+                clients={clients} 
+                setClients={setClients} 
+                session={session} 
+                selectedMonth={selectedMonth} 
+                onPaymentReceived={handleAutoAddTransaction}
+              />
+            </motion.div>
+          ) : currentPage === 'add' ? (
+            <motion.div 
+              key="add"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AddData 
+                session={session} 
+                transactions={transactions} 
+                setTransactions={setTransactions} 
+                projects={projects} 
+                setProjects={setProjects} 
+                clients={clients} 
+                setClients={setClients} 
+              />
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="earnings"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Earnings transactions={transactions} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
       
       <BottomNav currentPage={currentPage} setCurrentPage={setCurrentPage} />

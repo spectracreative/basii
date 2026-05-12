@@ -61,19 +61,16 @@ const BottomNav = ({ currentPage, setCurrentPage }) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          background: 'var(--color-primary)',
-          border: '4px solid white',
-          borderRadius: '50%',
-          color: 'white',
+          gap: '0.25rem',
+          background: 'none',
+          border: 'none',
+          color: currentPage === 'add' ? 'var(--color-primary)' : 'var(--color-text-muted)',
           cursor: 'pointer',
-          width: '56px',
-          height: '56px',
-          transform: 'translateY(-20px)',
-          boxShadow: '0 8px 16px rgba(16, 185, 129, 0.3)'
+          flex: 1
         }}
       >
-        <PlusCircle size={32} />
+        <PlusCircle size={24} />
+        <span style={{ fontSize: '0.7rem', fontWeight: currentPage === 'add' ? '600' : '400' }}>Add Data</span>
       </button>
 
       <button 
