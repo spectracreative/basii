@@ -7,11 +7,13 @@ import Projects from './components/Projects';
 import Analytics from './components/Analytics';
 import Login from './components/Login';
 import DeadlineAlerts from './components/DeadlineAlerts';
+import Earnings from './components/Earnings';
 import { supabase } from './utils/supabase';
 
 const App = () => {
   const [session, setSession] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState('All Time');
+  const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard' | 'earnings'
   
   // Data State
   const [transactions, setTransactions] = useState([]);
@@ -124,6 +126,24 @@ const App = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          
+          <div style={{ display: 'flex', backgroundColor: 'var(--color-bg)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <button 
+              className={`btn ${currentPage === 'dashboard' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ border: 'none', padding: '0.5rem 1rem' }}
+              onClick={() => setCurrentPage('dashboard')}
+            >
+              Dashboard
+            </button>
+            <button 
+              className={`btn ${currentPage === 'earnings' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ border: 'none', padding: '0.5rem 1rem' }}
+              onClick={() => setCurrentPage('earnings')}
+            >
+              Earnings Report
+            </button>
+          </div>
+
           <select 
             className="input-field" 
             style={{ width: 'auto', minWidth: '150px', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
@@ -141,34 +161,40 @@ const App = () => {
       </header>
 
       <main>
-        {/* Deadline Alerts (Global, not filtered by month) */}
-        <DeadlineAlerts projects={projects} />
+        {currentPage === 'dashboard' ? (
+          <>
+            {/* Deadline Alerts (Global, not filtered by month) */}
+            <DeadlineAlerts projects={projects} />
 
-        {/* Analytics Section */}
-        <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
+            {/* Analytics Section */}
+            <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
 
-        <Dashboard transactions={transactions} selectedMonth={selectedMonth} />
-        
-        {/* Finance and Tasks */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
-          <div style={{ flex: 1 }}>
-            <Transactions transactions={transactions} setTransactions={setTransactions} session={session} selectedMonth={selectedMonth} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <TodoList todos={todos} setTodos={setTodos} session={session} />
-          </div>
-        </div>
+            <Dashboard transactions={transactions} selectedMonth={selectedMonth} />
+            
+            {/* Finance and Tasks */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
+              <div style={{ flex: 1 }}>
+                <Transactions transactions={transactions} setTransactions={setTransactions} session={session} selectedMonth={selectedMonth} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <TodoList todos={todos} setTodos={setTodos} session={session} />
+              </div>
+            </div>
 
-        {/* Graphic Design Projects */}
-        <Projects 
-          projects={projects} 
-          setProjects={setProjects} 
-          clients={clients} 
-          setClients={setClients} 
-          session={session} 
-          selectedMonth={selectedMonth} 
-          onPaymentReceived={handleAutoAddTransaction}
-        />
+            {/* Graphic Design Projects */}
+            <Projects 
+              projects={projects} 
+              setProjects={setProjects} 
+              clients={clients} 
+              setClients={setClients} 
+              session={session} 
+              selectedMonth={selectedMonth} 
+              onPaymentReceived={handleAutoAddTransaction}
+            />
+          </>
+        ) : (
+          <Earnings transactions={transactions} />
+        )}
       </main>
     </div>
   );
