@@ -31,7 +31,7 @@ const Analytics = ({ projects, transactions }) => {
         <div className="glass" style={{ padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
           <p style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--color-text-main)' }}>{data.name}</p>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Projects: {data.count}</p>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-success)', fontWeight: '600' }}>Revenue: ${data.revenue.toFixed(2)}</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-success)', fontWeight: '600' }}>Revenue: ₹{data.revenue.toFixed(2)}</p>
         </div>
       );
     }
@@ -93,7 +93,7 @@ const Analytics = ({ projects, transactions }) => {
                   flexDirection: 'column'
                 }}>
                   <span style={{ color: 'var(--color-text-main)' }}>{client.name}</span>
-                  <span style={{ color: 'var(--color-primary)', fontWeight: '700' }}>${client.revenue.toFixed(0)}</span>
+                  <span style={{ color: 'var(--color-primary)', fontWeight: '700' }}>₹{client.revenue.toFixed(0)}</span>
                 </div>
               ))}
             </div>
@@ -143,8 +143,8 @@ const Analytics = ({ projects, transactions }) => {
                 <BarChart data={financialData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
-                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
-                  <Tooltip formatter={(val) => `$${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `₹${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <Tooltip formatter={(val) => `₹${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={50}>
                     {financialData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -162,8 +162,8 @@ const Analytics = ({ projects, transactions }) => {
                 <BarChart data={projectFinanceData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
-                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
-                  <Tooltip formatter={(val) => `$${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `₹${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <Tooltip formatter={(val) => `₹${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={50}>
                     {projectFinanceData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />

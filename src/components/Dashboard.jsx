@@ -20,7 +20,7 @@ const Dashboard = ({ transactions }) => {
           <div>
             <span className="label">Total Balance</span>
             <h2 style={{ fontSize: '2rem', fontWeight: '700', color: balance >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-              ${balance.toFixed(2)}
+              ₹{balance.toFixed(2)}
             </h2>
           </div>
           <div className="btn-icon" style={{ backgroundColor: 'var(--color-secondary)' }}>
@@ -40,7 +40,7 @@ const Dashboard = ({ transactions }) => {
           <div>
             <span className="label">Total Credits</span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '600' }}>
-              ${credits.toFixed(2)}
+              ₹{credits.toFixed(2)}
             </h2>
           </div>
           <div className="btn-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
@@ -60,7 +60,7 @@ const Dashboard = ({ transactions }) => {
           <div>
             <span className="label">Total Debits</span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '600' }}>
-              ${debits.toFixed(2)}
+              ₹{debits.toFixed(2)}
             </h2>
           </div>
           <div className="btn-icon" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>

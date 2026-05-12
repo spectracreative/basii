@@ -113,7 +113,7 @@ const Transactions = ({ transactions, setTransactions, session }) => {
                     fontWeight: '600', 
                     color: t.type === 'credit' ? 'var(--color-success)' : 'var(--color-text-main)' 
                   }}>
-                    {t.type === 'credit' ? '+' : '-'}${t.amount.toFixed(2)}
+                    {t.type === 'credit' ? '+' : '-'}₹{t.amount.toFixed(2)}
                   </span>
                   <button 
                     onClick={() => handleDelete(t.id)}

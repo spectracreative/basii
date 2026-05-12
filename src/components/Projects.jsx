@@ -185,11 +185,11 @@ const Projects = ({ projects, setProjects, clients, setClients, session }) => {
         <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'right' }}>
             <span className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Pending Payment</span>
-            <span style={{ fontWeight: '600', color: 'var(--color-warning)' }}>${pendingAmount.toFixed(2)}</span>
+            <span style={{ fontWeight: '600', color: 'var(--color-warning)' }}>₹{pendingAmount.toFixed(2)}</span>
           </div>
           <div style={{ textAlign: 'right' }}>
             <span className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Received (This Month)</span>
-            <span style={{ fontWeight: '600', color: 'var(--color-success)' }}>${receivedAmountThisMonth.toFixed(2)}</span>
+            <span style={{ fontWeight: '600', color: 'var(--color-success)' }}>₹{receivedAmountThisMonth.toFixed(2)}</span>
           </div>
           <div style={{ textAlign: 'right' }}>
             <span className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Tasks Status</span>
@@ -247,7 +247,7 @@ const Projects = ({ projects, setProjects, clients, setClients, session }) => {
             type="number"
             step="0.01"
             style={{ flex: '0 1 120px' }}
-            placeholder="Amount ($)"
+            placeholder="Amount (₹)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
@@ -328,7 +328,7 @@ const Projects = ({ projects, setProjects, clients, setClients, session }) => {
                         
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                           <span style={{ fontWeight: '600', color: project.paymentPending ? 'var(--color-text-main)' : 'var(--color-success)' }}>
-                            ${(project.amount || 0).toFixed(2)}
+                            ₹{(project.amount || 0).toFixed(2)}
                           </span>
                           <button 
                             onClick={() => handleDelete(project.id)}
