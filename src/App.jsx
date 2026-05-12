@@ -1,98 +1,116 @@
-import React from 'react';
-import useLocalStorage from './hooks/useLocalStorage';
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, LogOut } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Transactions from './components/Transactions';
 import TodoList from './components/TodoList';
 import Projects from './components/Projects';
 import Analytics from './components/Analytics';
 import Login from './components/Login';
-import { LayoutDashboard, LogOut } from 'lucide-react';
+import { supabase } from './utils/supabase';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useLocalStorage('basii_auth', false);
-  const [transactions, setTransactions] = useLocalStorage('basii_transactions', []);
-  const [todos, setTodos] = useLocalStorage('basii_todos', []);
-  const [projects, setProjects] = useLocalStorage('basii_projects', []);
-  const [clients, setClients] = useLocalStorage('basii_clients', ['Fitcore', 'Tornadoes', 'LG']);
+const App = () => {
+  const [session, setSession] = useState(null);
+  
+  // Data State
+  const [transactions, setTransactions] = useState([]);
+  const [todos, setTodos] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
-  const handleGlobalReset = () => {
-    const pwd = window.prompt("WARNING: This will delete ALL data. Enter password to confirm:");
-    if (pwd === 'Basi@2384') {
-      window.localStorage.clear();
-      window.location.reload();
-    } else if (pwd !== null) {
-      alert("Incorrect password.");
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchAllData();
+    }
+  }, [session]);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const [txnRes, todosRes, projRes, clientsRes] = await Promise.all([
+        supabase.from('transactions').select('*').order('created_at', { ascending: false }),
+        supabase.from('todos').select('*').order('created_at', { ascending: false }),
+        supabase.from('projects').select('*').order('created_at', { ascending: false }),
+        supabase.from('clients').select('*')
+      ]);
+
+      if (txnRes.data) setTransactions(txnRes.data);
+      if (todosRes.data) setTodos(todosRes.data);
+      if (projRes.data) setProjects(projRes.data);
+      if (clientsRes.data) setClients(clientsRes.data.map(c => c.name));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={setIsAuthenticated} />;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (!session) {
+    return <Login onLogin={setSession} />;
+  }
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--color-primary)' }}>Loading your dashboard...</div>;
   }
 
   return (
     <div className="container">
-      {/* Header */}
       <header className="flex-between" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ 
-            backgroundColor: 'var(--color-primary)', 
-            padding: '0.75rem', 
-            borderRadius: 'var(--radius-md)',
-            color: 'white'
-          }}>
-            <LayoutDashboard size={28} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '0.75rem', borderRadius: 'var(--radius-lg)' }}>
+            <LayoutDashboard size={24} />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-main)' }}>
-              Basii
-            </h1>
-            <p className="text-muted" style={{ fontSize: '0.875rem' }}>Professional Dashboard</p>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-main)' }}>Basii Dashboard</h1>
+            <p className="text-muted" style={{ fontSize: '0.875rem' }}>Personal Finance & Task Manager</p>
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button onClick={handleGlobalReset} className="btn btn-outline" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
-            Reset All Data
-          </button>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <button onClick={handleLogout} className="btn btn-outline">
             <LogOut size={18} /> Logout
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
       <main>
-        {/* Analytics & Graphs */}
-        <Analytics projects={projects} transactions={transactions} />
+        {/* Analytics Section */}
+        <Analytics transactions={transactions} projects={projects} clients={clients} />
 
-        {/* Existing Overview */}
         <Dashboard transactions={transactions} />
         
-        {/* Projects Tracker */}
-        <Projects 
-          projects={projects} 
-          setProjects={setProjects} 
-          clients={clients} 
-          setClients={setClients} 
-        />
-
         {/* Finance and Tasks */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
           <div style={{ flex: 1 }}>
-            <Transactions transactions={transactions} setTransactions={setTransactions} />
+            <Transactions transactions={transactions} setTransactions={setTransactions} session={session} />
           </div>
           <div style={{ flex: 1 }}>
-            <TodoList todos={todos} setTodos={setTodos} />
+            <TodoList todos={todos} setTodos={setTodos} session={session} />
           </div>
         </div>
 
+        {/* Graphic Design Projects */}
+        <Projects projects={projects} setProjects={setProjects} clients={clients} setClients={setClients} session={session} />
       </main>
     </div>
   );
-}
+};
 
 export default App;

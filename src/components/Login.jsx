@@ -1,18 +1,49 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, User } from 'lucide-react';
+import { supabase } from '../utils/supabase';
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === 'Basi' && password === 'Basi@2384') {
-      onLogin(true);
-    } else {
-      setError('Invalid username or password');
+    setError('');
+    setLoading(true);
+
+    // Supabase requires an email, so we fake an email using the username
+    const email = `${username.toLowerCase()}@basii.local`;
+
+    try {
+      if (isSignUp) {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (signUpError) throw signUpError;
+        if (data.session) {
+          onLogin(data.session);
+        } else {
+          // Sometimes email confirmation is required by default, but for local/personal we assume it works or we just show a message
+          setError('Signup successful! You can now sign in.');
+          setIsSignUp(false);
+        }
+      } else {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) throw signInError;
+        onLogin(data.session);
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,8 +69,12 @@ const Login = ({ onLogin }) => {
           }}>
             <Lock size={32} />
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-main)' }}>Welcome to Basii</h2>
-          <p className="text-muted" style={{ fontSize: '0.875rem' }}>Please sign in to access your dashboard</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-main)' }}>
+            {isSignUp ? 'Create Account' : 'Welcome to Basii'}
+          </h2>
+          <p className="text-muted" style={{ fontSize: '0.875rem' }}>
+            {isSignUp ? 'Sign up to sync your dashboard' : 'Please sign in to access your dashboard'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -75,10 +110,20 @@ const Login = ({ onLogin }) => {
 
           {error && <p className="text-danger" style={{ fontSize: '0.875rem', textAlign: 'center' }}>{error}</p>}
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '0.875rem' }}>
-            Sign In
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', marginTop: '0.5rem', padding: '0.875rem' }}>
+            {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
           </button>
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <button 
+            type="button" 
+            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.875rem', textDecoration: 'underline' }}
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
+        </div>
       </motion.div>
     </div>
   );

@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, CheckCircle, Circle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle } from 'lucide-react';
+import { supabase } from '../utils/supabase';
 
-const Projects = ({ projects, setProjects, clients, setClients }) => {
+const Projects = ({ projects, setProjects, clients, setClients, session }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [client, setClient] = useState('');
@@ -11,7 +12,7 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
   const [deadline, setDeadline] = useState('');
   const [amount, setAmount] = useState('');
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!name) return;
 
@@ -20,12 +21,17 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
     if (isAddingNewClient && newClient.trim()) {
       finalClient = newClient.trim();
       if (!clients.includes(finalClient)) {
-        setClients([...clients, finalClient]);
+        try {
+          await supabase.from('clients').insert([{ user_id: session.user.id, name: finalClient }]);
+          setClients([...clients, finalClient]);
+        } catch (error) {
+          console.error('Error adding client:', error);
+        }
       }
     }
 
     const newProject = {
-      id: Date.now().toString(),
+      user_id: session.user.id,
       name,
       description,
       client: finalClient,
@@ -36,7 +42,17 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
       paymentCompletedDate: null
     };
 
-    setProjects([newProject, ...projects]);
+    try {
+      const { data, error } = await supabase.from('projects').insert([newProject]).select();
+      if (error) throw error;
+      if (data && data[0]) {
+        setProjects([data[0], ...projects]);
+      }
+    } catch (error) {
+      console.error('Error adding project:', error);
+      alert('Failed to add project');
+    }
+
     setName('');
     setDescription('');
     setClient('');
@@ -46,37 +62,73 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
     setAmount('');
   };
 
-  const handleResetProjects = () => {
-    const pwd = window.prompt("WARNING: This will delete ALL Graphic Design Projects. Enter password to confirm:");
-    if (pwd === 'Basi@2384') {
-      setProjects([]);
-    } else if (pwd !== null) {
-      alert("Incorrect password.");
+  const handleResetProjects = async () => {
+    const pwd = window.prompt("WARNING: This will delete ALL Graphic Design Projects. Enter 'DELETE' to confirm:");
+    if (pwd === 'DELETE') {
+      try {
+        const { error } = await supabase.from('projects').delete().eq('user_id', session.user.id);
+        if (error) throw error;
+        setProjects([]);
+      } catch (error) {
+        console.error('Error resetting projects:', error);
+      }
     }
   };
 
-  const toggleWorkStatus = (id) => {
-    setProjects(projects.map(p => 
-      p.id === id ? { ...p, workPending: !p.workPending } : p
-    ));
+  const toggleWorkStatus = async (id, currentPending, currentDelivery) => {
+    const isNowDone = currentPending;
+    const newDeliveryDate = isNowDone ? new Date().toISOString().split('T')[0] : currentDelivery;
+    
+    try {
+      const { error } = await supabase.from('projects')
+        .update({ workPending: !currentPending, deliveryDate: newDeliveryDate })
+        .eq('id', id);
+      if (error) throw error;
+      
+      setProjects(projects.map(p => 
+        p.id === id ? { ...p, workPending: !currentPending, deliveryDate: newDeliveryDate } : p
+      ));
+    } catch (error) {
+      console.error('Error updating work status:', error);
+    }
   };
 
-  const togglePaymentStatus = (id) => {
-    setProjects(projects.map(p => {
-      if (p.id === id) {
-        const isNowPaid = p.paymentPending; // if it was pending, it is now paid
-        return { 
-          ...p, 
-          paymentPending: !p.paymentPending,
-          paymentCompletedDate: isNowPaid ? new Date().toISOString() : null
-        };
-      }
-      return p;
-    }));
+  const updateDeliveryDate = async (id, date) => {
+    try {
+      const { error } = await supabase.from('projects').update({ deliveryDate: date }).eq('id', id);
+      if (error) throw error;
+      setProjects(projects.map(p => p.id === id ? { ...p, deliveryDate: date } : p));
+    } catch (error) {
+      console.error('Error updating delivery date:', error);
+    }
   };
 
-  const handleDelete = (id) => {
-    setProjects(projects.filter(p => p.id !== id));
+  const togglePaymentStatus = async (id, currentPending) => {
+    const isNowPaid = currentPending;
+    const newDate = isNowPaid ? new Date().toISOString() : null;
+
+    try {
+      const { error } = await supabase.from('projects')
+        .update({ paymentPending: !currentPending, paymentCompletedDate: newDate })
+        .eq('id', id);
+      if (error) throw error;
+
+      setProjects(projects.map(p => 
+        p.id === id ? { ...p, paymentPending: !currentPending, paymentCompletedDate: newDate } : p
+      ));
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) throw error;
+      setProjects(projects.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
   };
 
   const isThisMonth = (dateString) => {
@@ -288,7 +340,7 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                             {project.description}
                           </p>
                         )}
-                        <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.875rem', color: 'var(--color-text-main)' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.875rem', color: 'var(--color-text-main)', flexWrap: 'wrap' }}>
                           {project.client && (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                               <Briefcase size={14} className="text-muted" /> {project.client}
@@ -296,8 +348,22 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                           )}
                           {project.deadline && (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                              <Calendar size={14} className="text-muted" /> {project.deadline}
+                              <Calendar size={14} className="text-muted" /> Deadline: {project.deadline}
                             </span>
+                          )}
+                          {!project.workPending && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <CheckCircle size={14} /> Delivered:
+                              </span>
+                              <input 
+                                type="date"
+                                className="input-field"
+                                style={{ padding: '0.1rem 0.5rem', fontSize: '0.75rem', width: 'auto', backgroundColor: 'transparent', border: '1px dashed var(--color-border)' }}
+                                value={project.deliveryDate || ''}
+                                onChange={(e) => updateDeliveryDate(project.id, e.target.value)}
+                              />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -305,7 +371,7 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                       {/* Checklists for Work and Payment */}
                       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
                         <button 
-                          onClick={() => toggleWorkStatus(project.id)}
+                          onClick={() => toggleWorkStatus(project.id, project.workPending, project.deliveryDate)}
                           className="btn btn-outline"
                           style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', gap: '0.5rem', 
                             borderColor: project.workPending ? 'var(--color-border)' : 'var(--color-success)',
@@ -318,7 +384,7 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                         </button>
 
                         <button 
-                          onClick={() => togglePaymentStatus(project.id)}
+                          onClick={() => togglePaymentStatus(project.id, project.paymentPending)}
                           className="btn btn-outline"
                           style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', gap: '0.5rem',
                             borderColor: project.paymentPending ? 'var(--color-border)' : 'var(--color-success)',

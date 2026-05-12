@@ -1,31 +1,49 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { supabase } from '../utils/supabase';
 
-const Transactions = ({ transactions, setTransactions }) => {
+const Transactions = ({ transactions, setTransactions, session }) => {
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('debit');
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!desc || !amount) return;
-    
-    const newTx = {
-      id: Date.now().toString(),
+
+    const newTxn = {
+      user_id: session.user.id,
       desc,
       amount: parseFloat(amount),
       type,
-      date: new Date().toLocaleDateString()
+      date: new Date().toISOString()
     };
-    
-    setTransactions([newTx, ...transactions]);
+
+    try {
+      const { data, error } = await supabase.from('transactions').insert([newTxn]).select();
+      if (error) throw error;
+      if (data && data[0]) {
+        setTransactions([data[0], ...transactions]);
+      }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      alert('Failed to add transaction');
+    }
+
     setDesc('');
     setAmount('');
   };
 
-  const handleDelete = (id) => {
-    setTransactions(transactions.filter(t => t.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) throw error;
+      setTransactions(transactions.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      alert('Failed to delete transaction');
+    }
   };
 
   return (

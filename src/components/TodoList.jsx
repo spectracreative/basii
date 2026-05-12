@@ -1,32 +1,55 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Check, Trash2, Circle } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { supabase } from '../utils/supabase';
 
-const TodoList = ({ todos, setTodos }) => {
+const TodoList = ({ todos, setTodos, session }) => {
   const [task, setTask] = useState('');
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     if (!task) return;
-    
+
     const newTodo = {
-      id: Date.now().toString(),
+      user_id: session.user.id,
       text: task,
       completed: false
     };
-    
-    setTodos([...todos, newTodo]);
+
+    try {
+      const { data, error } = await supabase.from('todos').insert([newTodo]).select();
+      if (error) throw error;
+      if (data && data[0]) {
+        setTodos([data[0], ...todos]);
+      }
+    } catch (error) {
+      console.error('Error adding todo:', error);
+      alert('Failed to add todo');
+    }
+
     setTask('');
   };
 
-  const toggleTodo = (id) => {
-    setTodos(todos.map(t => 
-      t.id === id ? { ...t, completed: !t.completed } : t
-    ));
+  const toggleTodo = async (id, currentCompleted) => {
+    try {
+      const { error } = await supabase.from('todos').update({ completed: !currentCompleted }).eq('id', id);
+      if (error) throw error;
+      setTodos(todos.map(t => 
+        t.id === id ? { ...t, completed: !t.completed } : t
+      ));
+    } catch (error) {
+      console.error('Error toggling todo:', error);
+    }
   };
 
-  const deleteTodo = (id) => {
-    setTodos(todos.filter(t => t.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const { error } = await supabase.from('todos').delete().eq('id', id);
+      if (error) throw error;
+      setTodos(todos.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+    }
   };
 
   const completedCount = todos.filter(t => t.completed).length;
@@ -74,7 +97,7 @@ const TodoList = ({ todos, setTodos }) => {
                 }}
               >
                 <button 
-                  onClick={() => toggleTodo(todo.id)}
+                  onClick={() => toggleTodo(todo.id, todo.completed)}
                   style={{ 
                     background: 'none', 
                     border: 'none', 
@@ -83,7 +106,7 @@ const TodoList = ({ todos, setTodos }) => {
                     color: todo.completed ? 'var(--color-success)' : 'var(--color-text-muted)'
                   }}
                 >
-                  {todo.completed ? <Check size={20} /> : <Circle size={20} />}
+                  {todo.completed ? <CheckCircle size={20} /> : <Circle size={20} />}
                 </button>
                 
                 <span style={{ 
@@ -95,7 +118,7 @@ const TodoList = ({ todos, setTodos }) => {
                 </span>
 
                 <button 
-                  onClick={() => deleteTodo(todo.id)}
+                  onClick={() => handleDelete(todo.id)}
                   className="btn-icon"
                   style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)' }}
                 >
