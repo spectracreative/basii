@@ -33,14 +33,16 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
       if (!client) return;
       if (!dataMap[client]) dataMap[client] = { name: client, count: 0, revenue: 0, received: 0, pending: 0 };
       dataMap[client].count += 1;
-      dataMap[client].revenue += (p.amount || 0);
+      
       const isActuallyReceived = !p.paymentPending && !p.workPending;
       const isPendingPayment = p.paymentPending && !p.workPending;
       
       if (isActuallyReceived) {
         dataMap[client].received += (p.amount || 0);
+        dataMap[client].revenue += (p.amount || 0);
       } else if (isPendingPayment) {
         dataMap[client].pending += (p.amount || 0);
+        dataMap[client].revenue += (p.amount || 0);
       }
     });
     
