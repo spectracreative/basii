@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, PlusCircle, LineChart } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, LineChart, Briefcase } from 'lucide-react';
 
 const BottomNav = ({ currentPage, setCurrentPage }) => {
   return (
@@ -35,6 +35,24 @@ const BottomNav = ({ currentPage, setCurrentPage }) => {
       >
         <LayoutDashboard size={24} />
         <span style={{ fontSize: '0.7rem', fontWeight: currentPage === 'dashboard' ? '600' : '400' }}>Dashboard</span>
+      </button>
+
+      <button 
+        onClick={() => setCurrentPage('projects')}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.25rem',
+          background: 'none',
+          border: 'none',
+          color: currentPage === 'projects' ? 'var(--color-primary)' : 'var(--color-text-muted)',
+          cursor: 'pointer',
+          flex: 1
+        }}
+      >
+        <Briefcase size={24} />
+        <span style={{ fontSize: '0.7rem', fontWeight: currentPage === 'projects' ? '600' : '400' }}>Projects</span>
       </button>
 
       <button 

@@ -164,18 +164,17 @@ const App = () => {
                 <TodoList todos={todos} setTodos={setTodos} session={session} />
               </div>
             </div>
-
-            {/* Graphic Design Projects */}
-            <Projects 
-              projects={projects} 
-              setProjects={setProjects} 
-              clients={clients} 
-              setClients={setClients} 
-              session={session} 
-              selectedMonth={selectedMonth} 
-              onPaymentReceived={handleAutoAddTransaction}
-            />
           </>
+        ) : currentPage === 'projects' ? (
+          <Projects 
+            projects={projects} 
+            setProjects={setProjects} 
+            clients={clients} 
+            setClients={setClients} 
+            session={session} 
+            selectedMonth={selectedMonth} 
+            onPaymentReceived={handleAutoAddTransaction}
+          />
         ) : currentPage === 'add' ? (
           <AddData 
             session={session} 
