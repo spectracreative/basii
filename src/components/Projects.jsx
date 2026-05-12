@@ -154,8 +154,8 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
   }));
 
   const pendingWorkCount = normalizedProjects.filter(p => p.workPending).length;
-  const pendingAmount = normalizedProjects.filter(p => p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
-  const receivedAmountThisMonth = normalizedProjects.filter(p => !p.paymentPending && isThisMonth(p.paymentCompletedDate)).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const pendingAmount = normalizedProjects.filter(p => p.paymentPending || p.workPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const receivedAmountThisMonth = normalizedProjects.filter(p => !p.paymentPending && !p.workPending && isThisMonth(p.paymentCompletedDate)).reduce((sum, p) => sum + (p.amount || 0), 0);
 
   // Group projects by Month
   const groupedProjects = useMemo(() => {

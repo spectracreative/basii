@@ -34,10 +34,12 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
       if (!dataMap[client]) dataMap[client] = { name: client, count: 0, revenue: 0, received: 0, pending: 0 };
       dataMap[client].count += 1;
       dataMap[client].revenue += (p.amount || 0);
-      if (p.paymentPending) {
-        dataMap[client].pending += (p.amount || 0);
-      } else {
+      const isActuallyReceived = !p.paymentPending && !p.workPending;
+      
+      if (isActuallyReceived) {
         dataMap[client].received += (p.amount || 0);
+      } else {
+        dataMap[client].pending += (p.amount || 0);
       }
     });
     
@@ -72,8 +74,9 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
 
   // 3. Calculate Project Finances (Pending vs Received)
   const projectFinanceData = useMemo(() => {
-    const pendingAmount = filteredProjects.filter(p => p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
-    const receivedAmount = filteredProjects.filter(p => !p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const isActuallyReceived = (p) => !p.paymentPending && !p.workPending;
+    const pendingAmount = filteredProjects.filter(p => !isActuallyReceived(p)).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const receivedAmount = filteredProjects.filter(p => isActuallyReceived(p)).reduce((sum, p) => sum + (p.amount || 0), 0);
 
     return [
       { name: 'Pending Payment', amount: pendingAmount, fill: 'var(--color-warning)' },
