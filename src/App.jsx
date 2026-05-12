@@ -8,6 +8,8 @@ import Analytics from './components/Analytics';
 import Login from './components/Login';
 import DeadlineAlerts from './components/DeadlineAlerts';
 import Earnings from './components/Earnings';
+import AddData from './components/AddData';
+import BottomNav from './components/BottomNav';
 import { supabase } from './utils/supabase';
 
 const App = () => {
@@ -126,24 +128,6 @@ const App = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          
-          <div style={{ display: 'flex', backgroundColor: 'var(--color-bg)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <button 
-              className={`btn ${currentPage === 'dashboard' ? 'btn-primary' : 'btn-outline'}`}
-              style={{ border: 'none', padding: '0.5rem 1rem' }}
-              onClick={() => setCurrentPage('dashboard')}
-            >
-              Dashboard
-            </button>
-            <button 
-              className={`btn ${currentPage === 'earnings' ? 'btn-primary' : 'btn-outline'}`}
-              style={{ border: 'none', padding: '0.5rem 1rem' }}
-              onClick={() => setCurrentPage('earnings')}
-            >
-              Earnings Report
-            </button>
-          </div>
-
           <select 
             className="input-field" 
             style={{ width: 'auto', minWidth: '150px', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
@@ -192,10 +176,22 @@ const App = () => {
               onPaymentReceived={handleAutoAddTransaction}
             />
           </>
+        ) : currentPage === 'add' ? (
+          <AddData 
+            session={session} 
+            transactions={transactions} 
+            setTransactions={setTransactions} 
+            projects={projects} 
+            setProjects={setProjects} 
+            clients={clients} 
+            setClients={setClients} 
+          />
         ) : (
           <Earnings transactions={transactions} />
         )}
       </main>
+      
+      <BottomNav currentPage={currentPage} setCurrentPage={setCurrentPage} />
     </div>
   );
 };

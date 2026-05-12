@@ -11,36 +11,6 @@ const Transactions = ({ transactions, setTransactions, session, selectedMonth })
       return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
     });
   }, [transactions, selectedMonth]);
-  const [desc, setDesc] = useState('');
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState('debit');
-
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!desc || !amount) return;
-
-    const newTxn = {
-      user_id: session.user.id,
-      desc,
-      amount: parseFloat(amount),
-      type,
-      date: new Date().toISOString()
-    };
-
-    try {
-      const { data, error } = await supabase.from('transactions').insert([newTxn]).select();
-      if (error) throw error;
-      if (data && data[0]) {
-        setTransactions([data[0], ...transactions]);
-      }
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-      alert('Failed to add transaction');
-    }
-
-    setDesc('');
-    setAmount('');
-  };
 
   const handleDelete = async (id) => {
     try {
@@ -57,38 +27,6 @@ const Transactions = ({ transactions, setTransactions, session, selectedMonth })
     <div className="card glass" style={{ marginTop: '2rem' }}>
       <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: '600' }}>Transactions</h3>
       
-      {/* Add Transaction Form */}
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-        <input 
-          className="input-field" 
-          style={{ flex: '1 1 200px' }}
-          placeholder="Description (e.g. Salary, Groceries)"
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-        />
-        <input 
-          className="input-field" 
-          style={{ flex: '1 1 120px' }}
-          type="number"
-          step="0.01"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <select 
-          className="input-field" 
-          style={{ flex: '0 1 150px' }}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          <option value="credit">Credit (+)</option>
-          <option value="debit">Debit (-)</option>
-        </select>
-        <button type="submit" className="btn btn-primary" style={{ flex: '0 1 auto' }}>
-          <Plus size={18} /> Add
-        </button>
-      </form>
-
       {/* Transaction List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {filteredTransactions.length === 0 ? (
