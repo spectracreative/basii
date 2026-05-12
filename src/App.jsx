@@ -81,7 +81,7 @@ function App() {
         />
 
         {/* Finance and Tasks */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
           <div style={{ flex: 1 }}>
             <Transactions transactions={transactions} setTransactions={setTransactions} />
           </div>

@@ -245,7 +245,7 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                       }}
                     >
                       <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                           <h4 style={{ 
                             fontSize: '1.125rem', 
                             fontWeight: '600',
@@ -303,11 +303,11 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                       </div>
 
                       {/* Checklists for Work and Payment */}
-                      <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
                         <button 
                           onClick={() => toggleWorkStatus(project.id)}
                           className="btn btn-outline"
-                          style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '0.5rem', 
+                          style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', gap: '0.5rem', 
                             borderColor: project.workPending ? 'var(--color-border)' : 'var(--color-success)',
                             color: project.workPending ? 'var(--color-text-main)' : 'var(--color-success)',
                             backgroundColor: project.workPending ? 'transparent' : 'rgba(16, 185, 129, 0.05)'
@@ -320,7 +320,7 @@ const Projects = ({ projects, setProjects, clients, setClients }) => {
                         <button 
                           onClick={() => togglePaymentStatus(project.id)}
                           className="btn btn-outline"
-                          style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '0.5rem',
+                          style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', gap: '0.5rem',
                             borderColor: project.paymentPending ? 'var(--color-border)' : 'var(--color-success)',
                             color: project.paymentPending ? 'var(--color-text-main)' : 'var(--color-success)',
                             backgroundColor: project.paymentPending ? 'transparent' : 'rgba(16, 185, 129, 0.05)'
