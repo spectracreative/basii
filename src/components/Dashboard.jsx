@@ -2,9 +2,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 
-const Dashboard = ({ transactions }) => {
-  const credits = transactions.filter(t => t.type === 'credit').reduce((acc, t) => acc + t.amount, 0);
-  const debits = transactions.filter(t => t.type === 'debit').reduce((acc, t) => acc + t.amount, 0);
+const Dashboard = ({ transactions, selectedMonth }) => {
+  const filteredTransactions = React.useMemo(() => {
+    if (!selectedMonth || selectedMonth === 'All Time') return transactions;
+    return transactions.filter(t => {
+      const date = new Date(t.created_at);
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+    });
+  }, [transactions, selectedMonth]);
+
+  const credits = filteredTransactions.filter(t => t.type === 'credit').reduce((acc, t) => acc + t.amount, 0);
+  const debits = filteredTransactions.filter(t => t.type === 'debit').reduce((acc, t) => acc + t.amount, 0);
   const balance = credits - debits;
 
   return (

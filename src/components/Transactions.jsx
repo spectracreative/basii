@@ -3,7 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
-const Transactions = ({ transactions, setTransactions, session }) => {
+const Transactions = ({ transactions, setTransactions, session, selectedMonth }) => {
+  const filteredTransactions = React.useMemo(() => {
+    if (!selectedMonth || selectedMonth === 'All Time') return transactions;
+    return transactions.filter(t => {
+      const date = new Date(t.created_at);
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+    });
+  }, [transactions, selectedMonth]);
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('debit');
@@ -84,11 +91,11 @@ const Transactions = ({ transactions, setTransactions, session }) => {
 
       {/* Transaction List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {transactions.length === 0 ? (
+        {filteredTransactions.length === 0 ? (
           <p className="text-muted" style={{ textAlign: 'center', padding: '2rem 0' }}>No transactions yet.</p>
         ) : (
           <AnimatePresence>
-            {transactions.map(t => (
+            {filteredTransactions.map(t => (
               <motion.div 
                 key={t.id}
                 initial={{ opacity: 0, x: -20 }}

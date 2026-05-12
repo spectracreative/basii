@@ -10,6 +10,7 @@ import { supabase } from './utils/supabase';
 
 const App = () => {
   const [session, setSession] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState('All Time');
   
   // Data State
   const [transactions, setTransactions] = useState([]);
@@ -59,6 +60,22 @@ const App = () => {
     }
   };
 
+  const availableMonths = React.useMemo(() => {
+    const months = new Set();
+    const addMonth = (dateString) => {
+      if (!dateString) return;
+      const date = new Date(dateString);
+      if (!isNaN(date)) {
+        months.add(date.toLocaleString('default', { month: 'long', year: 'numeric' }));
+      }
+    };
+    
+    transactions.forEach(t => addMonth(t.created_at));
+    projects.forEach(p => addMonth(p.created_at || new Date(parseInt(p.id))));
+    
+    return ['All Time', ...Array.from(months)];
+  }, [transactions, projects]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -83,7 +100,17 @@ const App = () => {
             <p className="text-muted" style={{ fontSize: '0.875rem' }}>Personal Finance & Task Manager</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <select 
+            className="input-field" 
+            style={{ width: 'auto', minWidth: '150px', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            {availableMonths.map(month => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+          </select>
           <button onClick={handleLogout} className="btn btn-outline">
             <LogOut size={18} /> Logout
           </button>
@@ -92,14 +119,14 @@ const App = () => {
 
       <main>
         {/* Analytics Section */}
-        <Analytics transactions={transactions} projects={projects} clients={clients} />
+        <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
 
-        <Dashboard transactions={transactions} />
+        <Dashboard transactions={transactions} selectedMonth={selectedMonth} />
         
         {/* Finance and Tasks */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
           <div style={{ flex: 1 }}>
-            <Transactions transactions={transactions} setTransactions={setTransactions} session={session} />
+            <Transactions transactions={transactions} setTransactions={setTransactions} session={session} selectedMonth={selectedMonth} />
           </div>
           <div style={{ flex: 1 }}>
             <TodoList todos={todos} setTodos={setTodos} session={session} />
@@ -107,7 +134,7 @@ const App = () => {
         </div>
 
         {/* Graphic Design Projects */}
-        <Projects projects={projects} setProjects={setProjects} clients={clients} setClients={setClients} session={session} />
+        <Projects projects={projects} setProjects={setProjects} clients={clients} setClients={setClients} session={session} selectedMonth={selectedMonth} />
       </main>
     </div>
   );

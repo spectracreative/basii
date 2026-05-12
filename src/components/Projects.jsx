@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, CheckCircle, Circle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
-const Projects = ({ projects, setProjects, clients, setClients, session }) => {
+const Projects = ({ projects, setProjects, clients, setClients, session, selectedMonth }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [client, setClient] = useState('');
@@ -278,7 +278,9 @@ const Projects = ({ projects, setProjects, clients, setClients, session }) => {
         {Object.keys(groupedProjects).length === 0 ? (
           <p className="text-muted" style={{ textAlign: 'center', padding: '2rem 0' }}>No projects yet.</p>
         ) : (
-          Object.entries(groupedProjects).map(([monthYear, monthProjects]) => (
+          Object.entries(groupedProjects)
+            .filter(([monthYear]) => !selectedMonth || selectedMonth === 'All Time' || monthYear === selectedMonth)
+            .map(([monthYear, monthProjects]) => (
             <div key={monthYear}>
               <h4 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--color-primary-dark)', marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
                 {monthYear}

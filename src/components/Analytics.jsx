@@ -8,11 +8,27 @@ import { Briefcase, Activity } from 'lucide-react';
 
 const COLORS = ['#10B981', '#34D399', '#059669', '#6EE7B7', '#A7F3D0', '#047857'];
 
-const Analytics = ({ projects, transactions }) => {
+const Analytics = ({ projects, transactions, selectedMonth }) => {
+  const filteredProjects = useMemo(() => {
+    if (!selectedMonth || selectedMonth === 'All Time') return projects;
+    return projects.filter(p => {
+      const date = p.created_at ? new Date(p.created_at) : new Date(parseInt(p.id));
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+    });
+  }, [projects, selectedMonth]);
+
+  const filteredTransactions = useMemo(() => {
+    if (!selectedMonth || selectedMonth === 'All Time') return transactions;
+    return transactions.filter(t => {
+      const date = new Date(t.created_at);
+      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+    });
+  }, [transactions, selectedMonth]);
+
   // 1. Calculate Project Distribution by Client
   const clientData = useMemo(() => {
     const dataMap = {};
-    projects.forEach(p => {
+    filteredProjects.forEach(p => {
       const client = p.client ? p.client.trim() : 'Unknown';
       if (!client) return;
       if (!dataMap[client]) dataMap[client] = { name: client, count: 0, revenue: 0 };
@@ -22,7 +38,7 @@ const Analytics = ({ projects, transactions }) => {
     
     // Use revenue for pie slice size
     return Object.values(dataMap).sort((a, b) => b.revenue - a.revenue);
-  }, [projects]);
+  }, [filteredProjects]);
 
   const CustomPieTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -40,25 +56,25 @@ const Analytics = ({ projects, transactions }) => {
 
   // 2. Calculate Financial Overview (Credits vs Debits)
   const financialData = useMemo(() => {
-    const credits = transactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
-    const debits = transactions.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+    const credits = filteredTransactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
+    const debits = filteredTransactions.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
     
     return [
       { name: 'Credits', amount: credits, fill: 'var(--color-success)' },
       { name: 'Debits', amount: debits, fill: 'var(--color-danger)' }
     ];
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   // 3. Calculate Project Finances (Pending vs Received)
   const projectFinanceData = useMemo(() => {
-    const pendingAmount = projects.filter(p => p.pending).reduce((sum, p) => sum + (p.amount || 0), 0);
-    const receivedAmount = projects.filter(p => !p.pending).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const pendingAmount = filteredProjects.filter(p => p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const receivedAmount = filteredProjects.filter(p => !p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
 
     return [
       { name: 'Pending Work', amount: pendingAmount, fill: 'var(--color-warning)' },
       { name: 'Received Work', amount: receivedAmount, fill: 'var(--color-success)' }
     ];
-  }, [projects]);
+  }, [filteredProjects]);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
