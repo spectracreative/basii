@@ -31,12 +31,17 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
     filteredProjects.forEach(p => {
       const client = p.client ? p.client.trim() : 'Unknown';
       if (!client) return;
-      if (!dataMap[client]) dataMap[client] = { name: client, count: 0, revenue: 0 };
+      if (!dataMap[client]) dataMap[client] = { name: client, count: 0, revenue: 0, received: 0, pending: 0 };
       dataMap[client].count += 1;
       dataMap[client].revenue += (p.amount || 0);
+      if (p.paymentPending) {
+        dataMap[client].pending += (p.amount || 0);
+      } else {
+        dataMap[client].received += (p.amount || 0);
+      }
     });
     
-    // Use revenue for pie slice size
+    // Sort by total revenue
     return Object.values(dataMap).sort((a, b) => b.revenue - a.revenue);
   }, [filteredProjects]);
 
@@ -114,25 +119,17 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
               ))}
             </div>
             
-            <div style={{ flex: 1, minHeight: '250px' }}>
+            <div style={{ flex: 1, minHeight: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={clientData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="revenue"
-                  >
-                    {clientData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomPieTooltip />} />
-                  <Legend wrapperStyle={{ paddingTop: '1rem' }} />
-                </PieChart>
+                <BarChart data={clientData} margin={{ top: 20, right: 0, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `₹${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <Tooltip formatter={(val) => `₹${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                  <Bar dataKey="received" name="Received Payment" fill="var(--color-success)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="pending" name="Pending Payment" fill="var(--color-warning)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </>
