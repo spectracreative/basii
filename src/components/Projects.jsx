@@ -154,8 +154,14 @@ const Projects = ({ projects, setProjects, clients, setClients, session }) => {
   const groupedProjects = useMemo(() => {
     const groups = {};
     normalizedProjects.forEach(project => {
-      // Extract creation date from ID or fallback
-      const date = new Date(parseInt(project.id));
+      // Use Supabase created_at, or fallback to parsing the ID for old local storage data
+      let date;
+      if (project.created_at) {
+        date = new Date(project.created_at);
+      } else {
+        date = new Date(parseInt(project.id) || Date.now());
+      }
+      
       const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
       
       if (!groups[monthYear]) {
