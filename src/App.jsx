@@ -61,6 +61,28 @@ const App = () => {
     }
   };
 
+  const handleAutoAddTransaction = async (project) => {
+    if (!project || !project.amount || project.amount <= 0) return;
+    
+    const newTxn = {
+      user_id: session.user.id,
+      desc: `Payment: ${project.name} (${project.client})`,
+      amount: parseFloat(project.amount),
+      type: 'credit',
+      date: new Date().toISOString()
+    };
+
+    try {
+      const { data, error } = await supabase.from('transactions').insert([newTxn]).select();
+      if (error) throw error;
+      if (data && data[0]) {
+        setTransactions(prev => [data[0], ...prev]);
+      }
+    } catch (error) {
+      console.error('Error auto-adding transaction:', error);
+    }
+  };
+
   const availableMonths = React.useMemo(() => {
     const months = new Set();
     const addMonth = (dateString) => {
@@ -138,7 +160,15 @@ const App = () => {
         </div>
 
         {/* Graphic Design Projects */}
-        <Projects projects={projects} setProjects={setProjects} clients={clients} setClients={setClients} session={session} selectedMonth={selectedMonth} />
+        <Projects 
+          projects={projects} 
+          setProjects={setProjects} 
+          clients={clients} 
+          setClients={setClients} 
+          session={session} 
+          selectedMonth={selectedMonth} 
+          onPaymentReceived={handleAutoAddTransaction}
+        />
       </main>
     </div>
   );

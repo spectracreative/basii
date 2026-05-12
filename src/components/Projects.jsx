@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, CheckCircle, Circle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
-const Projects = ({ projects, setProjects, clients, setClients, session, selectedMonth }) => {
+const Projects = ({ projects, setProjects, clients, setClients, session, selectedMonth, onPaymentReceived }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [client, setClient] = useState('');
@@ -123,6 +123,10 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
       setProjects(projects.map(p => 
         p.id === id ? { ...p, paymentPending: !currentPending, paymentCompletedDate: newDate } : p
       ));
+
+      if (isNowPaid && onPaymentReceived && project) {
+        onPaymentReceived(project);
+      }
     } catch (error) {
       console.error('Error updating payment status:', error);
     }
