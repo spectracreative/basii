@@ -11,15 +11,32 @@ const COLORS = ['#10B981', '#34D399', '#059669', '#6EE7B7', '#A7F3D0', '#047857'
 const Analytics = ({ projects, transactions }) => {
   // 1. Calculate Project Distribution by Client
   const clientData = useMemo(() => {
-    const counts = {};
+    const dataMap = {};
     projects.forEach(p => {
       const client = p.client ? p.client.trim() : 'Unknown';
       if (!client) return;
-      counts[client] = (counts[client] || 0) + 1;
+      if (!dataMap[client]) dataMap[client] = { name: client, count: 0, revenue: 0 };
+      dataMap[client].count += 1;
+      dataMap[client].revenue += (p.amount || 0);
     });
     
-    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    // Use revenue for pie slice size
+    return Object.values(dataMap).sort((a, b) => b.revenue - a.revenue);
   }, [projects]);
+
+  const CustomPieTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="glass" style={{ padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+          <p style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--color-text-main)' }}>{data.name}</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Projects: {data.count}</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-success)', fontWeight: '600' }}>Revenue: ${data.revenue.toFixed(2)}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // 2. Calculate Financial Overview (Credits vs Debits)
   const financialData = useMemo(() => {
@@ -70,31 +87,35 @@ const Analytics = ({ projects, transactions }) => {
                   padding: '0.5rem 1rem', 
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--color-border)',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}>
-                  {client.name} - <span style={{ color: 'var(--color-primary)', fontWeight: '700' }}>{client.value}</span>
+                  <span style={{ color: 'var(--color-text-main)' }}>{client.name}</span>
+                  <span style={{ color: 'var(--color-primary)', fontWeight: '700' }}>${client.revenue.toFixed(0)}</span>
                 </div>
               ))}
             </div>
             
-            <div style={{ flex: 1, minHeight: '200px' }}>
+            <div style={{ flex: 1, minHeight: '250px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={clientData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={70}
+                    outerRadius={90}
                     paddingAngle={5}
-                    dataKey="value"
+                    dataKey="revenue"
                   >
                     {clientData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip content={<CustomPieTooltip />} />
+                  <Legend wrapperStyle={{ paddingTop: '1rem' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -114,38 +135,44 @@ const Analytics = ({ projects, transactions }) => {
           <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>Financial Overview</h3>
         </div>
         
-        <div style={{ height: '200px', marginBottom: '2rem' }}>
-          <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>Transactions (Credits vs Debits)</h4>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={financialData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} />
-              <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
-              <Tooltip formatter={(val) => `$${val}`} cursor={{fill: 'transparent'}} />
-              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                {financialData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', textAlign: 'center' }}>Transactions</h4>
+            <div style={{ flex: 1, minHeight: '200px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={financialData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <Tooltip formatter={(val) => `$${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
+                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                    {financialData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-        <div style={{ height: '200px' }}>
-          <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem', textAlign: 'center' }}>Graphic Design Work (Pending vs Received)</h4>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={projectFinanceData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} />
-              <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
-              <Tooltip formatter={(val) => `$${val}`} cursor={{fill: 'transparent'}} />
-              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                {projectFinanceData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', textAlign: 'center' }}>Projects</h4>
+            <div style={{ flex: 1, minHeight: '200px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={projectFinanceData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <Tooltip formatter={(val) => `$${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
+                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                    {projectFinanceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
       </motion.div>
