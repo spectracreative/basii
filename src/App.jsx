@@ -6,6 +6,7 @@ import TodoList from './components/TodoList';
 import Projects from './components/Projects';
 import Analytics from './components/Analytics';
 import Login from './components/Login';
+import DeadlineAlerts from './components/DeadlineAlerts';
 import { supabase } from './utils/supabase';
 
 const App = () => {
@@ -118,6 +119,9 @@ const App = () => {
       </header>
 
       <main>
+        {/* Deadline Alerts (Global, not filtered by month) */}
+        <DeadlineAlerts projects={projects} />
+
         {/* Analytics Section */}
         <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
 

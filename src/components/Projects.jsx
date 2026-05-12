@@ -104,6 +104,13 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
   };
 
   const togglePaymentStatus = async (id, currentPending) => {
+    // Find the project first to check work status
+    const project = projects.find(p => p.id === id);
+    if (project && project.workPending && currentPending) {
+      alert("You must mark the work as 'Completed' before you can log a payment!");
+      return;
+    }
+
     const isNowPaid = currentPending;
     const newDate = isNowPaid ? new Date().toISOString() : null;
 
@@ -397,8 +404,11 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
                           style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', gap: '0.5rem',
                             borderColor: project.paymentPending ? 'var(--color-border)' : 'var(--color-success)',
                             color: project.paymentPending ? 'var(--color-text-main)' : 'var(--color-success)',
-                            backgroundColor: project.paymentPending ? 'transparent' : 'rgba(16, 185, 129, 0.05)'
+                            backgroundColor: project.paymentPending ? 'transparent' : 'rgba(16, 185, 129, 0.05)',
+                            opacity: (project.workPending && project.paymentPending) ? 0.5 : 1,
+                            cursor: (project.workPending && project.paymentPending) ? 'not-allowed' : 'pointer'
                           }}
+                          title={project.workPending && project.paymentPending ? "Complete work first" : ""}
                         >
                           <DollarSign size={16} />
                           {project.paymentPending ? 'Mark Payment Received' : 'Payment Received'}

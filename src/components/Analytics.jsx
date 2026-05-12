@@ -76,8 +76,19 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
     const receivedAmount = filteredProjects.filter(p => !p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
 
     return [
-      { name: 'Pending Work', amount: pendingAmount, fill: 'var(--color-warning)' },
-      { name: 'Received Work', amount: receivedAmount, fill: 'var(--color-success)' }
+      { name: 'Pending Payment', amount: pendingAmount, fill: 'var(--color-warning)' },
+      { name: 'Received Payment', amount: receivedAmount, fill: 'var(--color-success)' }
+    ];
+  }, [filteredProjects]);
+
+  // 4. Calculate Project Workflow (Pending Work vs Completed Work)
+  const projectWorkData = useMemo(() => {
+    const pendingWorkAmount = filteredProjects.filter(p => p.workPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const completedWorkAmount = filteredProjects.filter(p => !p.workPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    return [
+      { name: 'Pending Work', amount: pendingWorkAmount, fill: 'var(--color-danger)' },
+      { name: 'Completed Work', amount: completedWorkAmount, fill: 'var(--color-success)' }
     ];
   }, [filteredProjects]);
 
@@ -169,7 +180,7 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', textAlign: 'center' }}>Projects</h4>
+            <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', textAlign: 'center' }}>Project Payments</h4>
             <div style={{ flex: 1, minHeight: '200px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={projectFinanceData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
@@ -179,6 +190,25 @@ const Analytics = ({ projects, transactions, selectedMonth }) => {
                   <Tooltip formatter={(val) => `₹${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={50}>
                     {projectFinanceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', textAlign: 'center' }}>Project Workflow</h4>
+            <div style={{ flex: 1, minHeight: '200px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={projectWorkData} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `₹${val}`} tick={{fontSize: 12, fill: 'var(--color-text-muted)'}} />
+                  <Tooltip formatter={(val) => `₹${val}`} cursor={{fill: 'var(--color-bg)'}} contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }} />
+                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                    {projectWorkData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Bar>
