@@ -16,7 +16,8 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     // Supabase requires an email, so we fake an email using the username
-    const email = `${username.toLowerCase()}@basii.local`;
+    // We use a standard TLD (.com) because Supabase rejects .local
+    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@basii.com`;
 
     try {
       if (isSignUp) {
