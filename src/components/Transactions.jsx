@@ -3,14 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
-const Transactions = ({ transactions, setTransactions, session, selectedMonth }) => {
+const Transactions = ({ transactions, setTransactions, session, dateFilter }) => {
   const filteredTransactions = React.useMemo(() => {
-    if (!selectedMonth || selectedMonth === 'All Time') return transactions;
+    if (!dateFilter || dateFilter.type === 'all') return transactions;
     return transactions.filter(t => {
       const date = new Date(t.created_at);
-      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+      if (dateFilter.type === 'month') {
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === dateFilter.value;
+      } else if (dateFilter.type === 'day') {
+        const localDateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        return localDateStr === dateFilter.value;
+      }
+      return true;
     });
-  }, [transactions, selectedMonth]);
+  }, [transactions, dateFilter]);
 
   const handleDelete = async (id) => {
     try {

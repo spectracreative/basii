@@ -15,7 +15,7 @@ import { supabase } from './utils/supabase';
 
 const App = () => {
   const [session, setSession] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState('All Time');
+  const [dateFilter, setDateFilter] = useState({ type: 'all', value: null });
   const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard' | 'earnings'
   
   // Data State
@@ -129,16 +129,46 @@ const App = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <select 
-            className="input-field" 
-            style={{ width: 'auto', minWidth: '150px', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-          >
-            {availableMonths.map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select 
+              className="input-field" 
+              style={{ width: 'auto', minWidth: '120px', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
+              value={dateFilter.type}
+              onChange={(e) => {
+                const type = e.target.value;
+                if (type === 'all') setDateFilter({ type: 'all', value: null });
+                else if (type === 'month') setDateFilter({ type: 'month', value: availableMonths.find(m => m !== 'All Time') || '' });
+                else if (type === 'day') setDateFilter({ type: 'day', value: new Date().toISOString().split('T')[0] });
+              }}
+            >
+              <option value="all">All Time</option>
+              <option value="month">By Month</option>
+              <option value="day">By Day</option>
+            </select>
+
+            {dateFilter.type === 'month' && (
+              <select 
+                className="input-field" 
+                style={{ width: 'auto', minWidth: '150px', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
+                value={dateFilter.value || ''}
+                onChange={(e) => setDateFilter({ type: 'month', value: e.target.value })}
+              >
+                {availableMonths.filter(m => m !== 'All Time').map(month => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+            )}
+
+            {dateFilter.type === 'day' && (
+              <input 
+                type="date" 
+                className="input-field" 
+                style={{ width: 'auto', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}
+                value={dateFilter.value || ''}
+                onChange={(e) => setDateFilter({ type: 'day', value: e.target.value })} 
+              />
+            )}
+          </div>
           <button onClick={handleLogout} className="btn btn-outline">
             <LogOut size={18} /> Logout
           </button>
@@ -159,14 +189,14 @@ const App = () => {
               <DeadlineAlerts projects={projects} />
 
               {/* Analytics Section */}
-              <Analytics transactions={transactions} projects={projects} clients={clients} selectedMonth={selectedMonth} />
+              <Analytics transactions={transactions} projects={projects} clients={clients} dateFilter={dateFilter} />
 
-              <Dashboard transactions={transactions} selectedMonth={selectedMonth} />
+              <Dashboard transactions={transactions} dateFilter={dateFilter} />
               
               {/* Finance and Tasks */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
                 <div style={{ flex: 1 }}>
-                  <Transactions transactions={transactions} setTransactions={setTransactions} session={session} selectedMonth={selectedMonth} />
+                  <Transactions transactions={transactions} setTransactions={setTransactions} session={session} dateFilter={dateFilter} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <TodoList todos={todos} setTodos={setTodos} session={session} />
@@ -187,7 +217,7 @@ const App = () => {
                 clients={clients} 
                 setClients={setClients} 
                 session={session} 
-                selectedMonth={selectedMonth} 
+                dateFilter={dateFilter} 
                 onPaymentReceived={handleAutoAddTransaction}
               />
             </motion.div>
@@ -217,7 +247,7 @@ const App = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <Earnings transactions={transactions} />
+              <Earnings transactions={transactions} dateFilter={dateFilter} />
             </motion.div>
           )}
         </AnimatePresence>

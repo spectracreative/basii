@@ -3,12 +3,24 @@ import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 
-const Earnings = ({ transactions }) => {
+const Earnings = ({ transactions, dateFilter }) => {
   const chartData = useMemo(() => {
     const monthMap = {};
 
+    const filteredTransactions = transactions.filter(t => {
+      if (!dateFilter || dateFilter.type === 'all') return true;
+      const date = new Date(t.created_at || t.date);
+      if (dateFilter.type === 'month') {
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === dateFilter.value;
+      } else if (dateFilter.type === 'day') {
+        const localDateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        return localDateStr === dateFilter.value;
+      }
+      return true;
+    });
+
     // Group transactions by Month/Year
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       const date = new Date(t.created_at || t.date);
       if (isNaN(date)) return;
       
@@ -28,7 +40,7 @@ const Earnings = ({ transactions }) => {
 
     // Sort chronologically and return array
     return Object.values(monthMap).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-  }, [transactions]);
+  }, [transactions, dateFilter]);
 
   const totalEarnings = chartData.reduce((sum, data) => sum + data.earnings, 0);
   const totalExpenses = chartData.reduce((sum, data) => sum + data.expenses, 0);

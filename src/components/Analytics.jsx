@@ -8,22 +8,34 @@ import { Briefcase, Activity } from 'lucide-react';
 
 const COLORS = ['#10B981', '#34D399', '#059669', '#6EE7B7', '#A7F3D0', '#047857'];
 
-const Analytics = ({ projects, transactions, selectedMonth }) => {
+const Analytics = ({ projects, transactions, dateFilter }) => {
   const filteredProjects = useMemo(() => {
-    if (!selectedMonth || selectedMonth === 'All Time') return projects;
+    if (!dateFilter || dateFilter.type === 'all') return projects;
     return projects.filter(p => {
       const date = p.created_at ? new Date(p.created_at) : new Date(parseInt(p.id));
-      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+      if (dateFilter.type === 'month') {
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === dateFilter.value;
+      } else if (dateFilter.type === 'day') {
+        const localDateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        return localDateStr === dateFilter.value;
+      }
+      return true;
     });
-  }, [projects, selectedMonth]);
+  }, [projects, dateFilter]);
 
   const filteredTransactions = useMemo(() => {
-    if (!selectedMonth || selectedMonth === 'All Time') return transactions;
+    if (!dateFilter || dateFilter.type === 'all') return transactions;
     return transactions.filter(t => {
       const date = new Date(t.created_at);
-      return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === selectedMonth;
+      if (dateFilter.type === 'month') {
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === dateFilter.value;
+      } else if (dateFilter.type === 'day') {
+        const localDateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        return localDateStr === dateFilter.value;
+      }
+      return true;
     });
-  }, [transactions, selectedMonth]);
+  }, [transactions, dateFilter]);
 
   // 1. Calculate Project Distribution by Client
   const clientData = useMemo(() => {

@@ -4,7 +4,7 @@ import { Trash2, CheckCircle, Briefcase, Calendar, DollarSign, Paintbrush, Alert
 import { supabase } from '../utils/supabase';
 import { printProjectBill } from '../utils/billPrint';
 
-const Projects = ({ projects, setProjects, clients, setClients, session, selectedMonth, onPaymentReceived }) => {
+const Projects = ({ projects, setProjects, clients, setClients, session, dateFilter, onPaymentReceived }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const handleResetProjects = async () => {
@@ -93,29 +93,36 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
     }
   };
 
-  const isThisMonth = (dateString) => {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    const now = new Date();
-    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-  };
+  const filteredProjects = useMemo(() => {
+    const normalized = projects.map(p => ({
+      ...p,
+      workPending: p.workPending !== undefined ? p.workPending : p.pending,
+      paymentPending: p.paymentPending !== undefined ? p.paymentPending : p.pending,
+      paymentCompletedDate: p.paymentCompletedDate !== undefined ? p.paymentCompletedDate : p.completedDate
+    }));
 
-  // Convert old projects format to new format if needed
-  const normalizedProjects = projects.map(p => ({
-    ...p,
-    workPending: p.workPending !== undefined ? p.workPending : p.pending,
-    paymentPending: p.paymentPending !== undefined ? p.paymentPending : p.pending,
-    paymentCompletedDate: p.paymentCompletedDate !== undefined ? p.paymentCompletedDate : p.completedDate
-  }));
+    if (!dateFilter || dateFilter.type === 'all') return normalized;
 
-  const pendingWorkCount = normalizedProjects.filter(p => p.workPending).length;
-  const pendingAmount = normalizedProjects.filter(p => p.paymentPending && !p.workPending).reduce((sum, p) => sum + (p.amount || 0), 0);
-  const receivedAmountThisMonth = normalizedProjects.filter(p => !p.paymentPending && !p.workPending && isThisMonth(p.paymentCompletedDate)).reduce((sum, p) => sum + (p.amount || 0), 0);
+    return normalized.filter(p => {
+      const date = p.created_at ? new Date(p.created_at) : new Date(parseInt(p.id));
+      if (dateFilter.type === 'month') {
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' }) === dateFilter.value;
+      } else if (dateFilter.type === 'day') {
+        const localDateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        return localDateStr === dateFilter.value;
+      }
+      return true;
+    });
+  }, [projects, dateFilter]);
+
+  const pendingWorkCount = filteredProjects.filter(p => p.workPending).length;
+  const pendingAmount = filteredProjects.filter(p => p.paymentPending && !p.workPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const receivedAmount = filteredProjects.filter(p => !p.paymentPending && !p.workPending).reduce((sum, p) => sum + (p.amount || 0), 0);
 
   // Group projects by Month
   const groupedProjects = useMemo(() => {
     const groups = {};
-    normalizedProjects.forEach(project => {
+    filteredProjects.forEach(project => {
       let date;
       if (project.created_at) {
         date = new Date(project.created_at);
@@ -131,7 +138,7 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
       groups[monthYear].push(project);
     });
     return groups;
-  }, [normalizedProjects]);
+  }, [filteredProjects]);
 
   // Selection helpers
   const toggleSelect = (id) => {
@@ -147,17 +154,14 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
   };
 
   const selectAllUnpaid = () => {
-    const unpaidIds = normalizedProjects
+    const unpaidIds = filteredProjects
       .filter(p => p.paymentPending)
       .map(p => p.id);
     setSelectedIds(new Set(unpaidIds));
   };
 
   const selectAll = () => {
-    // Select all currently visible (filtered) projects
-    const visibleProjects = Object.entries(groupedProjects)
-      .filter(([monthYear]) => !selectedMonth || selectedMonth === 'All Time' || monthYear === selectedMonth)
-      .flatMap(([, monthProjects]) => monthProjects);
+    const visibleProjects = filteredProjects;
     setSelectedIds(new Set(visibleProjects.map(p => p.id)));
   };
 
@@ -166,13 +170,13 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
   };
 
   const handlePrintSelected = () => {
-    const selectedProjects = normalizedProjects.filter(p => selectedIds.has(p.id));
+    const selectedProjects = filteredProjects.filter(p => selectedIds.has(p.id));
     if (selectedProjects.length === 0) return;
     printProjectBill(selectedProjects);
   };
 
   const handlePrintUnpaid = () => {
-    const unpaidProjects = normalizedProjects.filter(p => p.paymentPending);
+    const unpaidProjects = filteredProjects.filter(p => p.paymentPending);
     if (unpaidProjects.length === 0) {
       alert('No unpaid projects to invoice.');
       return;
@@ -180,7 +184,7 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
     printProjectBill(unpaidProjects);
   };
 
-  const selectedTotal = normalizedProjects
+  const selectedTotal = filteredProjects
     .filter(p => selectedIds.has(p.id))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
@@ -200,8 +204,8 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
             <span style={{ fontWeight: '600', color: 'var(--color-warning)' }}>₹{pendingAmount.toFixed(2)}</span>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <span className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Received (This Month)</span>
-            <span style={{ fontWeight: '600', color: 'var(--color-success)' }}>₹{receivedAmountThisMonth.toFixed(2)}</span>
+            <span className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Received (Period)</span>
+            <span style={{ fontWeight: '600', color: 'var(--color-success)' }}>₹{receivedAmount.toFixed(2)}</span>
           </div>
           <div style={{ textAlign: 'right' }}>
             <span className="text-muted" style={{ fontSize: '0.75rem', display: 'block' }}>Tasks Status</span>
@@ -314,7 +318,6 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
           <p className="text-muted" style={{ textAlign: 'center', padding: '2rem 0' }}>No projects yet.</p>
         ) : (
           Object.entries(groupedProjects)
-            .filter(([monthYear]) => !selectedMonth || selectedMonth === 'All Time' || monthYear === selectedMonth)
             .map(([monthYear, monthProjects]) => (
             <div key={monthYear}>
               <h4 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--color-primary-dark)', marginBottom: '1rem', borderBottom: '2px solid var(--color-border)', paddingBottom: '0.5rem' }}>
