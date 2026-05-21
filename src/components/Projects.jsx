@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, CheckCircle, Circle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, Circle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle, Printer } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { printProjectBill } from '../utils/billPrint';
 
 const Projects = ({ projects, setProjects, clients, setClients, session, selectedMonth, onPaymentReceived }) => {
   const handleResetProjects = async () => {
@@ -283,6 +284,16 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
                         >
                           <DollarSign size={16} />
                           {project.paymentPending ? 'Mark Payment Received' : 'Payment Received'}
+                        </button>
+
+                        <button
+                          onClick={() => printProjectBill(project)}
+                          className="btn btn-outline"
+                          style={{ flex: '1 1 120px', display: 'flex', justifyContent: 'center', gap: '0.5rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                          title="Print / Save as PDF"
+                        >
+                          <Printer size={16} />
+                          Print Bill
                         </button>
                       </div>
                     </motion.div>
