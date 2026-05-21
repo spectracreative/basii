@@ -61,6 +61,13 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
     }));
   };
 
+  const handleFromChange = (field, value) => {
+    setInvoiceData(prev => ({
+      ...prev,
+      from: { ...prev.from, [field]: value }
+    }));
+  };
+
   const handleItemChange = (id, field, value) => {
     setItems(items.map(item => 
       item.id === id ? { ...item, [field]: value } : item
@@ -120,6 +127,14 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
             <div>
               <label className="text-muted" style={{ fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>Date</label>
               <input type="date" className="input-field" value={invoiceData.date} onChange={(e) => handleDataChange('date', e.target.value)} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem' }}>Your Details (From)</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <input type="text" className="input-field" placeholder="Your Business Name" value={invoiceData.from.name} onChange={(e) => handleFromChange('name', e.target.value)} />
+              <input type="text" className="input-field" placeholder="Subtitle or Email" value={invoiceData.from.email} onChange={(e) => handleFromChange('email', e.target.value)} />
             </div>
           </div>
 
@@ -189,8 +204,8 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
           {/* HEADER BANNER */}
           <div style={{ background: 'linear-gradient(90deg, #10443E, #228B75)', color: 'white', padding: '2rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>Basii Studio</h1>
-              <p style={{ color: '#E6FFF8', fontSize: '0.9rem', marginTop: '0.25rem' }}>Graphic Design Services</p>
+              <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>{invoiceData.from.name || 'Your Name'}</h1>
+              <p style={{ color: '#E6FFF8', fontSize: '0.9rem', marginTop: '0.25rem' }}>{invoiceData.from.email || 'Services'}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <h1 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '0.05em', margin: 0 }}>INVOICE</h1>
@@ -272,8 +287,8 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
 
           {/* FOOTER */}
           <div style={{ background: 'linear-gradient(90deg, #228B75, #10443E)', color: 'white', padding: '1rem', textAlign: 'center', marginTop: 'auto' }}>
-            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 'bold', fontSize: '0.9rem' }}>Basii Studio</p>
-            <p style={{ margin: 0, color: '#E6FFF8', fontSize: '0.75rem' }}>Graphic Design Services · Thank you for your business!</p>
+            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 'bold', fontSize: '0.9rem' }}>{invoiceData.from.name || 'Your Name'}</p>
+            <p style={{ margin: 0, color: '#E6FFF8', fontSize: '0.75rem' }}>{invoiceData.from.email ? `${invoiceData.from.email} · ` : ''}Thank you for your business!</p>
           </div>
           
         </div>
