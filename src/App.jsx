@@ -248,7 +248,7 @@ const App = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <InvoiceGenerator />
+              <InvoiceGenerator projects={projects} />
             </motion.div>
           ) : (
             <motion.div 

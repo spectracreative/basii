@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Printer, FileText } from 'lucide-react';
 
-const InvoiceGenerator = () => {
+const InvoiceGenerator = ({ projects }) => {
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
     date: new Date().toISOString().split('T')[0],
@@ -112,7 +112,31 @@ const InvoiceGenerator = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {items.map((item, index) => (
                 <div key={item.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                  <input type="text" className="input-field" placeholder="Description" style={{ flex: 2 }} value={item.description} onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} />
+                  <input 
+                    list={`project-list-${item.id}`}
+                    type="text" 
+                    className="input-field" 
+                    placeholder="Description (Select project or type...)" 
+                    style={{ flex: 2 }} 
+                    value={item.description} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleItemChange(item.id, 'description', val);
+                      
+                      // Auto-fill rate if a project matches the description
+                      if (projects && projects.length > 0) {
+                        const matchedProject = projects.find(p => p.name === val);
+                        if (matchedProject && matchedProject.amount) {
+                          handleItemChange(item.id, 'rate', parseFloat(matchedProject.amount));
+                        }
+                      }
+                    }} 
+                  />
+                  <datalist id={`project-list-${item.id}`}>
+                    {projects?.map(p => (
+                      <option key={p.id} value={p.name}>{p.client ? `${p.name} - ${p.client}` : p.name}</option>
+                    ))}
+                  </datalist>
                   <input type="number" className="input-field" placeholder="Qty" style={{ width: '60px' }} value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} />
                   <input type="number" className="input-field" placeholder="Rate" style={{ width: '80px' }} value={item.rate} onChange={(e) => handleItemChange(item.id, 'rate', parseFloat(e.target.value) || 0)} />
                   <button onClick={() => removeItem(item.id)} className="btn-icon" style={{ padding: '0.6rem', color: 'var(--color-danger)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
