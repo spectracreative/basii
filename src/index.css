@@ -214,3 +214,66 @@ body {
   h2 { font-size: 1.25rem !important; }
   h3 { font-size: 1.1rem !important; }
 }
+
+/* =========================================
+   INVOICE GENERATOR STYLES
+========================================= */
+.invoice-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .invoice-layout {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+.invoice-preview {
+  background: white;
+  color: #111;
+  padding: 3rem 4rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  min-height: 29.7cm; /* Approximate A4 height */
+}
+
+/* =========================================
+   PRINT STYLES
+========================================= */
+@media print {
+  /* Hide everything except the invoice preview */
+  body * {
+    visibility: hidden;
+  }
+  
+  .invoice-preview, .invoice-preview * {
+    visibility: visible;
+  }
+  
+  .invoice-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Reset background for printing */
+  body {
+    background: white;
+  }
+  
+  .bottom-nav {
+    display: none !important;
+  }
+}

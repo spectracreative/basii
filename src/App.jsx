@@ -11,6 +11,7 @@ import DeadlineAlerts from './components/DeadlineAlerts';
 import Earnings from './components/Earnings';
 import AddData from './components/AddData';
 import BottomNav from './components/BottomNav';
+import InvoiceGenerator from './components/InvoiceGenerator';
 import { supabase } from './utils/supabase';
 
 const App = () => {
@@ -238,6 +239,16 @@ const App = () => {
                 clients={clients} 
                 setClients={setClients} 
               />
+            </motion.div>
+          ) : currentPage === 'invoice' ? (
+            <motion.div 
+              key="invoice"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <InvoiceGenerator />
             </motion.div>
           ) : (
             <motion.div 
