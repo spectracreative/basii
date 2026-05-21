@@ -1,12 +1,16 @@
 import jsPDF from 'jspdf';
 
 /**
- * Generates and downloads a professional PDF invoice for a project.
- * Uses jsPDF for direct PDF creation — no print dialog needed.
+ * Generates and downloads a professional combined PDF invoice for multiple projects.
+ * Accepts a single project or an array of projects.
  */
-export const printProjectBill = (project) => {
+export const printProjectBill = (projectsInput) => {
+  const projects = Array.isArray(projectsInput) ? projectsInput : [projectsInput];
+  if (projects.length === 0) return;
+
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
 
@@ -27,7 +31,7 @@ export const printProjectBill = (project) => {
     white: [255, 255, 255],
     tableBorder: [229, 231, 235],// #E5E7EB
     tableStripe: [249, 250, 251],// #F9FAFB
-    totalBg: [232, 245, 241],    // #E8F5F1 (teal tinted)
+    totalBg: [232, 245, 241],    // #E8F5F1
   };
 
   // Helper: draw a horizontal gradient rectangle
@@ -43,11 +47,30 @@ export const printProjectBill = (project) => {
     }
   };
 
-  const billDate = project.paymentCompletedDate
-    ? new Date(project.paymentCompletedDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
-    : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  // Helper: draw footer on current page
+  const drawFooter = () => {
+    const footerHeight = 18;
+    const footerTop = pageHeight - footerHeight;
+    drawGradientRect(0, footerTop, pageWidth, footerHeight, colors.brandLighter, colors.brand);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.white);
+    doc.text('Basii Studio', pageWidth / 2, footerTop + 8, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(230, 255, 248);
+    doc.text('Graphic Design Services  ·  Thank you for your business!', pageWidth / 2, footerTop + 13, { align: 'center' });
+  };
 
-  const invoiceNo = `INV-${project.id?.toString().slice(-6).toUpperCase() || Date.now()}`;
+  // Collect info
+  const billDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const invoiceNo = `INV-${Date.now().toString(36).toUpperCase()}`;
+  const grandTotal = projects.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const unpaidTotal = projects.filter(p => p.paymentPending).reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  // Get unique clients
+  const clientNames = [...new Set(projects.map(p => p.client).filter(Boolean))];
+  const clientDisplay = clientNames.length > 0 ? clientNames.join(', ') : 'Client';
 
   let y = margin;
 
@@ -55,39 +78,29 @@ export const printProjectBill = (project) => {
   // HEADER — Full-width gradient banner with white text
   // ================================================================
   const headerHeight = 38;
-
-  // Draw gradient background
   drawGradientRect(0, 0, pageWidth, headerHeight, colors.brand, colors.brandLighter);
 
-  // Brand name — white on gradient
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(26);
   doc.setTextColor(...colors.white);
   doc.text('Basii Studio', margin, 16);
 
-  // Brand tagline — white (slightly transparent feel via lighter weight)
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
   doc.text('Graphic Design Services', margin, 23);
 
-  // INVOICE title — right side, white
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(30);
   doc.setTextColor(...colors.white);
   doc.text('INVOICE', pageWidth - margin, 15, { align: 'right' });
 
-  // Invoice number — white
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(230, 255, 248);
   doc.text(invoiceNo, pageWidth - margin, 23, { align: 'right' });
-
-  // Date — white
-  doc.setFontSize(10);
   doc.text(billDate, pageWidth - margin, 30, { align: 'right' });
 
-  // Thin accent line below header
   doc.setDrawColor(...colors.brandLight);
   doc.setLineWidth(0.6);
   doc.line(0, headerHeight, pageWidth, headerHeight);
@@ -95,11 +108,11 @@ export const printProjectBill = (project) => {
   y = headerHeight + 12;
 
   // ================================================================
-  // CLIENT & PROJECT DETAILS (Two-column layout)
+  // CLIENT & INVOICE SUMMARY
   // ================================================================
   const colWidth = contentWidth / 2;
 
-  // Left column — Billed To
+  // Left — Billed To
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...colors.textLight);
@@ -108,64 +121,37 @@ export const printProjectBill = (project) => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(...colors.textDark);
-  doc.text(project.client || 'Client', margin, y + 7);
+  const clientText = clientDisplay.length > 30 ? clientDisplay.substring(0, 28) + '...' : clientDisplay;
+  doc.text(clientText, margin, y + 7);
 
-  // Right column — Project
+  // Right — Summary
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...colors.textLight);
-  doc.text('PROJECT', margin + colWidth, y);
+  doc.text('INVOICE SUMMARY', margin + colWidth, y);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
   doc.setTextColor(...colors.textDark);
-  doc.text(project.name || 'Project', margin + colWidth, y + 7);
+  doc.text(`${projects.length} project${projects.length > 1 ? 's' : ''}`, margin + colWidth, y + 7);
 
-  if (project.description) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...colors.textMuted);
-    const descLines = doc.splitTextToSize(project.description, colWidth - 10);
-    doc.text(descLines, margin + colWidth, y + 13);
+  if (unpaidTotal > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...colors.warningText);
+    doc.text(`Amount Due: Rs.${unpaidTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, margin + colWidth, y + 14);
   }
 
-  y += 24;
-
-  // Second row of details: Deadline + Delivery Date
-  const detailItems = [];
-  if (project.deadline) {
-    detailItems.push({ label: 'DEADLINE', value: project.deadline });
-  }
-  if (project.deliveryDate) {
-    detailItems.push({ label: 'DELIVERED ON', value: project.deliveryDate });
-  }
-
-  if (detailItems.length > 0) {
-    detailItems.forEach((item, i) => {
-      const xPos = margin + i * colWidth;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(...colors.textLight);
-      doc.text(item.label, xPos, y);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.setTextColor(...colors.textDark);
-      doc.text(item.value, xPos, y + 6);
-    });
-    y += 16;
-  }
-
-  y += 6;
+  y += 28;
 
   // ================================================================
-  // TABLE — Line items
+  // TABLE — All project line items
   // ================================================================
-  const tableStartY = y;
   const colDefs = [
-    { label: '#', width: 12, align: 'center' },
-    { label: 'Description', width: contentWidth - 12 - 30 - 35, align: 'left' },
-    { label: 'Status', width: 35, align: 'center' },
+    { label: '#', width: 10, align: 'center' },
+    { label: 'Project', width: contentWidth - 10 - 35 - 28 - 30, align: 'left' },
+    { label: 'Client', width: 35, align: 'left' },
+    { label: 'Status', width: 28, align: 'center' },
     { label: 'Amount', width: 30, align: 'right' },
   ];
 
@@ -174,84 +160,127 @@ export const printProjectBill = (project) => {
   doc.roundedRect(margin, y, contentWidth, 10, 2, 2, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(...colors.white);
 
   let colX = margin;
   colDefs.forEach(col => {
     const textX = col.align === 'center' ? colX + col.width / 2
       : col.align === 'right' ? colX + col.width - 3
-      : colX + 4;
+      : colX + 3;
     doc.text(col.label, textX, y + 7, { align: col.align === 'left' ? 'left' : col.align });
     colX += col.width;
   });
 
-  y += 14;
+  y += 13;
 
-  // Table row — project line item
-  const rowHeight = 16;
+  // Footer area reserved
+  const footerReserve = 70; // space for total + notes + footer bar
+  const maxContentY = pageHeight - footerReserve;
 
-  // Light background for the row
-  doc.setFillColor(...colors.tableStripe);
-  doc.roundedRect(margin, y - 3, contentWidth, rowHeight, 1, 1, 'F');
+  // Table rows
+  projects.forEach((project, index) => {
+    const rowHeight = 14;
 
-  colX = margin;
+    // Check if we need a new page
+    if (y + rowHeight > maxContentY) {
+      drawFooter();
+      doc.addPage();
+      y = margin;
 
-  // Column: #
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(...colors.textDark);
-  doc.text('1', colX + colDefs[0].width / 2, y + 5, { align: 'center' });
-  colX += colDefs[0].width;
+      // Re-draw table header on new page
+      doc.setFillColor(...colors.brand);
+      doc.roundedRect(margin, y, contentWidth, 10, 2, 2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.white);
+      let hColX = margin;
+      colDefs.forEach(col => {
+        const textX = col.align === 'center' ? hColX + col.width / 2
+          : col.align === 'right' ? hColX + col.width - 3
+          : hColX + 3;
+        doc.text(col.label, textX, y + 7, { align: col.align === 'left' ? 'left' : col.align });
+        hColX += col.width;
+      });
+      y += 13;
+    }
 
-  // Column: Description
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(...colors.textDark);
-  const descText = project.name || 'Design Service';
-  doc.text(descText, colX + 4, y + 5);
+    // Alternate row background
+    if (index % 2 === 0) {
+      doc.setFillColor(...colors.tableStripe);
+      doc.rect(margin, y - 2, contentWidth, rowHeight, 'F');
+    }
 
-  if (project.description) {
+    colX = margin;
+
+    // #
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.textMuted);
+    doc.text(`${index + 1}`, colX + colDefs[0].width / 2, y + 5, { align: 'center' });
+    colX += colDefs[0].width;
+
+    // Project name + description
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.textDark);
+    const projName = (project.name || 'Project').length > 28
+      ? (project.name || 'Project').substring(0, 26) + '...'
+      : (project.name || 'Project');
+    doc.text(projName, colX + 3, y + 4);
+
+    if (project.description) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...colors.textMuted);
+      const shortDesc = project.description.length > 35
+        ? project.description.substring(0, 33) + '...'
+        : project.description;
+      doc.text(shortDesc, colX + 3, y + 9);
+    }
+    colX += colDefs[1].width;
+
+    // Client
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(...colors.textMuted);
-    const shortDesc = project.description.length > 60
-      ? project.description.substring(0, 57) + '...'
-      : project.description;
-    doc.text(shortDesc, colX + 4, y + 10);
-  }
-  colX += colDefs[1].width;
+    const clientName = (project.client || '-').length > 14
+      ? (project.client || '-').substring(0, 12) + '...'
+      : (project.client || '-');
+    doc.text(clientName, colX + 3, y + 5);
+    colX += colDefs[2].width;
 
-  // Column: Status badge
-  const isPaid = !project.paymentPending;
-  const badgeText = isPaid ? 'PAID' : 'PENDING';
-  const badgeBg = isPaid ? colors.successBg : colors.warningBg;
-  const badgeColor = isPaid ? colors.successText : colors.warningText;
+    // Status badge
+    const isPaid = !project.paymentPending;
+    const badgeText = isPaid ? 'PAID' : 'UNPAID';
+    const badgeBg = isPaid ? colors.successBg : colors.warningBg;
+    const badgeColor = isPaid ? colors.successText : colors.warningText;
 
-  doc.setFillColor(...badgeBg);
-  const badgeWidth = 22;
-  const badgeX = colX + (colDefs[2].width - badgeWidth) / 2;
-  doc.roundedRect(badgeX, y + 1, badgeWidth, 7, 3, 3, 'F');
+    doc.setFillColor(...badgeBg);
+    const badgeW = 18;
+    const badgeX = colX + (colDefs[3].width - badgeW) / 2;
+    doc.roundedRect(badgeX, y + 1, badgeW, 6, 3, 3, 'F');
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(...badgeColor);
-  doc.text(badgeText, colX + colDefs[2].width / 2, y + 6, { align: 'center' });
-  colX += colDefs[2].width;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.setTextColor(...badgeColor);
+    doc.text(badgeText, colX + colDefs[3].width / 2, y + 5.5, { align: 'center' });
+    colX += colDefs[3].width;
 
-  // Column: Amount
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(...colors.textDark);
-  const amountStr = `Rs.${(project.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-  doc.text(amountStr, colX + colDefs[3].width - 3, y + 5, { align: 'right' });
+    // Amount
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.textDark);
+    const amt = `Rs.${(project.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    doc.text(amt, colX + colDefs[4].width - 3, y + 5, { align: 'right' });
 
-  y += rowHeight + 2;
+    // Row bottom border
+    doc.setDrawColor(...colors.tableBorder);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y + rowHeight - 2, pageWidth - margin, y + rowHeight - 2);
 
-  // Bottom border
-  doc.setDrawColor(...colors.tableBorder);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, pageWidth - margin, y);
+    y += rowHeight;
+  });
 
   y += 4;
 
@@ -262,43 +291,31 @@ export const printProjectBill = (project) => {
   doc.roundedRect(margin, y - 2, contentWidth, 14, 2, 2, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setTextColor(...colors.textDark);
-  doc.text('Total', pageWidth - margin - colDefs[3].width - 8, y + 7, { align: 'right' });
+  doc.text('Grand Total', pageWidth - margin - colDefs[4].width - 8, y + 7, { align: 'right' });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(...colors.brand);
-  const totalStr = `Rs.${(project.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  const totalStr = `Rs.${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   doc.text(totalStr, pageWidth - margin - 3, y + 7, { align: 'right' });
 
-  y += 22;
+  y += 20;
 
-  // ================================================================
-  // PAYMENT INFO BOX (if paid)
-  // ================================================================
-  if (!project.paymentPending && project.paymentCompletedDate) {
-    const paymentDate = new Date(project.paymentCompletedDate).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'long', year: 'numeric'
-    });
-
-    doc.setFillColor(...colors.successBg);
-    doc.roundedRect(margin, y, contentWidth, 16, 3, 3, 'F');
-
-    doc.setDrawColor(...colors.success);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(margin, y, contentWidth, 16, 3, 3, 'S');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...colors.successText);
-    doc.text('PAYMENT RECEIVED', margin + 8, y + 7);
-
+  // Unpaid subtotal if there's a mix
+  const paidTotal = grandTotal - unpaidTotal;
+  if (unpaidTotal > 0 && paidTotal > 0) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Payment was received on ${paymentDate}`, margin + 8, y + 12);
-
-    y += 24;
+    doc.setTextColor(...colors.textMuted);
+    doc.text(`Paid: Rs.${paidTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, pageWidth - margin - 3, y, { align: 'right' });
+    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.warningText);
+    doc.text(`Amount Due: Rs.${unpaidTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, pageWidth - margin - 3, y, { align: 'right' });
+    y += 10;
   }
 
   // ================================================================
@@ -330,39 +347,15 @@ export const printProjectBill = (project) => {
   });
 
   // ================================================================
-  // FOOTER — Gradient bar with white text
+  // FOOTER
   // ================================================================
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const footerHeight = 18;
-  const footerTop = pageHeight - footerHeight;
-
-  // Draw gradient footer (reversed direction for visual variety)
-  drawGradientRect(0, footerTop, pageWidth, footerHeight, colors.brandLighter, colors.brand);
-
-  // Footer text — white
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(...colors.white);
-  doc.text(
-    'Basii Studio',
-    pageWidth / 2,
-    footerTop + 8,
-    { align: 'center' }
-  );
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(230, 255, 248);
-  doc.text(
-    'Graphic Design Services  ·  Thank you for your business!',
-    pageWidth / 2,
-    footerTop + 13,
-    { align: 'center' }
-  );
+  drawFooter();
 
   // ================================================================
   // AUTO-DOWNLOAD PDF
   // ================================================================
-  const fileName = `Invoice_${(project.name || 'Project').replace(/[^a-zA-Z0-9]/g, '_')}_${invoiceNo}.pdf`;
+  const fileName = projects.length === 1
+    ? `Invoice_${(projects[0].name || 'Project').replace(/[^a-zA-Z0-9]/g, '_')}_${invoiceNo}.pdf`
+    : `Invoice_${projects.length}_Projects_${invoiceNo}.pdf`;
   doc.save(fileName);
 };

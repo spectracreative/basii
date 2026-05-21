@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, CheckCircle, Circle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle, Printer } from 'lucide-react';
+import { Trash2, CheckCircle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle, FileText, CheckSquare, Square, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { printProjectBill } from '../utils/billPrint';
 
 const Projects = ({ projects, setProjects, clients, setClients, session, selectedMonth, onPaymentReceived }) => {
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
   const handleResetProjects = async () => {
     const pwd = window.prompt("WARNING: This will delete ALL Graphic Design Projects. Enter 'DELETE' to confirm:");
     if (pwd === 'DELETE') {
@@ -12,6 +14,7 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
         const { error } = await supabase.from('projects').delete().eq('user_id', session.user.id);
         if (error) throw error;
         setProjects([]);
+        setSelectedIds(new Set());
       } catch (error) {
         console.error('Error resetting projects:', error);
       }
@@ -80,6 +83,11 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
       const { error } = await supabase.from('projects').delete().eq('id', id);
       if (error) throw error;
       setProjects(projects.filter(p => p.id !== id));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } catch (error) {
       console.error('Error deleting project:', error);
     }
@@ -108,7 +116,6 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
   const groupedProjects = useMemo(() => {
     const groups = {};
     normalizedProjects.forEach(project => {
-      // Use Supabase created_at, or fallback to parsing the ID for old local storage data
       let date;
       if (project.created_at) {
         date = new Date(project.created_at);
@@ -125,6 +132,57 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
     });
     return groups;
   }, [normalizedProjects]);
+
+  // Selection helpers
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAllUnpaid = () => {
+    const unpaidIds = normalizedProjects
+      .filter(p => p.paymentPending)
+      .map(p => p.id);
+    setSelectedIds(new Set(unpaidIds));
+  };
+
+  const selectAll = () => {
+    // Select all currently visible (filtered) projects
+    const visibleProjects = Object.entries(groupedProjects)
+      .filter(([monthYear]) => !selectedMonth || selectedMonth === 'All Time' || monthYear === selectedMonth)
+      .flatMap(([, monthProjects]) => monthProjects);
+    setSelectedIds(new Set(visibleProjects.map(p => p.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handlePrintSelected = () => {
+    const selectedProjects = normalizedProjects.filter(p => selectedIds.has(p.id));
+    if (selectedProjects.length === 0) return;
+    printProjectBill(selectedProjects);
+  };
+
+  const handlePrintUnpaid = () => {
+    const unpaidProjects = normalizedProjects.filter(p => p.paymentPending);
+    if (unpaidProjects.length === 0) {
+      alert('No unpaid projects to invoice.');
+      return;
+    }
+    printProjectBill(unpaidProjects);
+  };
+
+  const selectedTotal = normalizedProjects
+    .filter(p => selectedIds.has(p.id))
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   return (
     <div className="card glass" style={{ marginTop: '2rem' }}>
@@ -152,6 +210,104 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
         </div>
       </div>
 
+      {/* Invoice Action Bar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+        marginBottom: '1.5rem',
+        padding: '0.75rem 1rem',
+        backgroundColor: 'rgba(16, 68, 62, 0.04)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid rgba(16, 68, 62, 0.12)',
+      }}>
+        <FileText size={18} style={{ color: '#10443E', flexShrink: 0 }} />
+        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#10443E', marginRight: '0.25rem' }}>Invoice:</span>
+
+        <button
+          onClick={handlePrintUnpaid}
+          className="btn"
+          style={{
+            padding: '0.4rem 0.85rem',
+            fontSize: '0.78rem',
+            backgroundColor: '#F59E0B',
+            color: 'white',
+            borderRadius: 'var(--radius-full)',
+            border: 'none',
+            fontWeight: '600',
+          }}
+          title="Generate invoice for all unpaid projects"
+        >
+          All Unpaid
+        </button>
+
+        <button
+          onClick={selectAllUnpaid}
+          className="btn btn-outline"
+          style={{
+            padding: '0.4rem 0.85rem',
+            fontSize: '0.78rem',
+            borderRadius: 'var(--radius-full)',
+            borderColor: '#10443E',
+            color: '#10443E',
+          }}
+        >
+          Select Unpaid
+        </button>
+
+        <button
+          onClick={selectAll}
+          className="btn btn-outline"
+          style={{
+            padding: '0.4rem 0.85rem',
+            fontSize: '0.78rem',
+            borderRadius: 'var(--radius-full)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Select All
+        </button>
+
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto' }}
+          >
+            <span style={{ fontSize: '0.8rem', color: '#10443E', fontWeight: '600' }}>
+              {selectedIds.size} selected · ₹{selectedTotal.toFixed(2)}
+            </span>
+            <button
+              onClick={handlePrintSelected}
+              className="btn"
+              style={{
+                padding: '0.4rem 1rem',
+                fontSize: '0.78rem',
+                background: 'linear-gradient(135deg, #10443E, #228B75)',
+                color: 'white',
+                borderRadius: 'var(--radius-full)',
+                border: 'none',
+                fontWeight: '600',
+                boxShadow: '0 2px 8px rgba(16, 68, 62, 0.3)',
+              }}
+            >
+              <FileText size={14} style={{ marginRight: '0.3rem' }} />
+              Generate Invoice
+            </button>
+            <button
+              onClick={clearSelection}
+              className="btn-icon"
+              style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '0.25rem' }}
+              title="Clear selection"
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </div>
+
       {/* Projects List by Month */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {Object.keys(groupedProjects).length === 0 ? (
@@ -166,7 +322,9 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <AnimatePresence>
-                  {monthProjects.map(project => (
+                  {monthProjects.map(project => {
+                    const isSelected = selectedIds.has(project.id);
+                    return (
                     <motion.div 
                       key={project.id}
                       initial={{ opacity: 0, y: -10 }}
@@ -176,15 +334,36 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
                         display: 'flex', 
                         flexDirection: 'column',
                         padding: '1.25rem',
-                        border: '1px solid var(--color-border)',
+                        border: isSelected ? '2px solid #10443E' : '1px solid var(--color-border)',
                         borderRadius: 'var(--radius-md)',
-                        backgroundColor: (!project.workPending && !project.paymentPending) ? 'var(--color-bg)' : 'var(--color-surface)',
-                        transition: 'background-color 0.2s ease',
-                        opacity: (!project.workPending && !project.paymentPending) ? 0.7 : 1
+                        backgroundColor: isSelected
+                          ? 'rgba(16, 68, 62, 0.03)'
+                          : (!project.workPending && !project.paymentPending) ? 'var(--color-bg)' : 'var(--color-surface)',
+                        transition: 'all 0.2s ease',
+                        opacity: (!project.workPending && !project.paymentPending) ? 0.7 : 1,
+                        cursor: 'pointer',
                       }}
                     >
                       <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          {/* Selection checkbox */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleSelect(project.id); }}
+                            style={{
+                              border: 'none',
+                              backgroundColor: 'transparent',
+                              cursor: 'pointer',
+                              color: isSelected ? '#10443E' : 'var(--color-text-muted)',
+                              padding: '0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              transition: 'color 0.15s ease',
+                            }}
+                            title={isSelected ? 'Deselect' : 'Select for invoice'}
+                          >
+                            {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
+                          </button>
+
                           <h4 style={{ 
                             fontSize: '1.125rem', 
                             fontWeight: '600',
@@ -285,19 +464,10 @@ const Projects = ({ projects, setProjects, clients, setClients, session, selecte
                           <DollarSign size={16} />
                           {project.paymentPending ? 'Mark Payment Received' : 'Payment Received'}
                         </button>
-
-                        <button
-                          onClick={() => printProjectBill(project)}
-                          className="btn btn-outline"
-                          style={{ flex: '1 1 120px', display: 'flex', justifyContent: 'center', gap: '0.5rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-                          title="Print / Save as PDF"
-                        >
-                          <Printer size={16} />
-                          Print Bill
-                        </button>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </AnimatePresence>
               </div>
             </div>
