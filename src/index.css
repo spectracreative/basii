@@ -259,9 +259,16 @@ body {
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 1cm; /* Manage padding for print */
     box-shadow: none;
     border: none;
+    min-height: 0; /* Remove fixed height to prevent extra blank pages */
+    height: auto;
+  }
+
+  /* Prevent page breaks inside table rows */
+  tr {
+    page-break-inside: avoid;
   }
 
   .no-print {

@@ -183,86 +183,98 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
           </div>
         </div>
 
-        {/* PRINT PREVIEW PANEL (Visible always, forms the actual invoice on print) */}
-        <div className="invoice-preview card">
+        {/* PRINT PREVIEW PANEL */}
+        <div className="invoice-preview card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '29.7cm' }}>
           
-          <div className="invoice-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem' }}>
+          {/* HEADER BANNER */}
+          <div style={{ background: 'linear-gradient(90deg, #10443E, #228B75)', color: 'white', padding: '2rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--color-primary)', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>INVOICE</h1>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>#{invoiceData.invoiceNumber}</p>
+              <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0 }}>Basii Studio</h1>
+              <p style={{ color: '#E6FFF8', fontSize: '0.9rem', marginTop: '0.25rem' }}>Graphic Design Services</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--color-text-main)' }}>{invoiceData.from.name}</h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{invoiceData.from.address}</p>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{invoiceData.from.email}</p>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '0.05em', margin: 0 }}>INVOICE</h1>
+              <p style={{ color: '#E6FFF8', fontSize: '0.9rem', marginTop: '0.25rem' }}>{invoiceData.invoiceNumber} | {invoiceData.date}</p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem' }}>
-            <div>
-              <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Billed To</h4>
-              {invoiceData.billedTo.name ? (
-                <>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--color-text-main)' }}>{invoiceData.billedTo.name}</h3>
-                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{invoiceData.billedTo.address}</p>
-                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{invoiceData.billedTo.email}</p>
-                </>
-              ) : (
-                <p style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>Client details...</p>
-              )}
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.2rem' }}>Date</h4>
-                <p style={{ fontWeight: '500', color: 'var(--color-text-main)' }}>{invoiceData.date}</p>
-              </div>
+          <div style={{ padding: '3rem', flex: 1 }}>
+            {/* CLIENT & SUMMARY AREA */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
               <div>
-                <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.2rem' }}>Due Date</h4>
-                <p style={{ fontWeight: '500', color: 'var(--color-text-main)' }}>{invoiceData.dueDate}</p>
+                <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>BILLED TO</h4>
+                {invoiceData.billedTo.name ? (
+                  <>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-text-main)', margin: '0 0 0.25rem 0' }}>{invoiceData.billedTo.name}</h3>
+                    {invoiceData.billedTo.address && <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', whiteSpace: 'pre-wrap', margin: '0 0 0.25rem 0' }}>{invoiceData.billedTo.address}</p>}
+                    {invoiceData.billedTo.email && <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', margin: 0 }}>{invoiceData.billedTo.email}</p>}
+                  </>
+                ) : (
+                  <p style={{ color: 'var(--color-text-light)', fontStyle: 'italic', fontSize: '0.9rem', margin: 0 }}>Client details...</p>
+                )}
+              </div>
+              
+              <div style={{ textAlign: 'right' }}>
+                <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>INVOICE SUMMARY</h4>
+                <p style={{ color: 'var(--color-text-main)', fontSize: '1rem', margin: '0 0 0.25rem 0' }}>{items.length} Project{items.length !== 1 ? 's' : ''}</p>
+                <p style={{ color: '#F59E0B', fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>Amount Due: ₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
               </div>
             </div>
-          </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '3rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
-                <th style={{ textAlign: 'left', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Description</th>
-                <th style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Qty</th>
-                <th style={{ textAlign: 'right', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Rate</th>
-                <th style={{ textAlign: 'right', padding: '1rem 0', color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <td style={{ padding: '1rem 0', fontWeight: '500', color: 'var(--color-text-main)' }}>{item.description || 'Item description'}</td>
-                  <td style={{ padding: '1rem 0', textAlign: 'center', color: 'var(--color-text-main)' }}>{item.quantity}</td>
-                  <td style={{ padding: '1rem 0', textAlign: 'right', color: 'var(--color-text-main)' }}>₹{item.rate.toFixed(2)}</td>
-                  <td style={{ padding: '1rem 0', textAlign: 'right', fontWeight: '600', color: 'var(--color-text-main)' }}>₹{(item.quantity * item.rate).toFixed(2)}</td>
+            {/* TABLE */}
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, marginBottom: '3rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.8rem', width: '5%', borderTopLeftRadius: 'var(--radius-md)', borderBottomLeftRadius: 'var(--radius-md)' }}>#</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem' }}>Project / Description</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.8rem', width: '15%' }}>Qty</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'right', fontSize: '0.8rem', width: '20%' }}>Rate</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'right', fontSize: '0.8rem', width: '20%', borderTopRightRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item, index) => (
+                  <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#F9FAFB' : 'transparent' }}>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem', borderBottom: '1px solid #E5E7EB' }}>{index + 1}</td>
+                    <td style={{ padding: '1rem', fontWeight: '600', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>{item.description || 'Item description'}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>{item.quantity}</td>
+                    <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>₹{item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>₹{(item.quantity * item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '3rem' }}>
-            <div style={{ width: '250px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--color-border)' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Subtotal</span>
-                <span style={{ fontWeight: '500' }}>₹{total.toFixed(2)}</span>
+            {/* TOTAL ROW */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '3rem' }}>
+              <div style={{ backgroundColor: '#E8F5F1', padding: '1rem 1.5rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '2rem', minWidth: '250px', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-text-main)' }}>Grand Total</span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10443E' }}>₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', marginTop: '0.5rem' }}>
-                <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--color-primary-dark)' }}>Total Due</span>
-                <span style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--color-primary)' }}>₹{total.toFixed(2)}</span>
+            </div>
+
+            {/* NOTES & TERMS */}
+            <div>
+              <div style={{ borderTop: '2px solid #E5E7EB', paddingTop: '1.5rem' }}>
+                <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>NOTES & TERMS</h4>
+                {invoiceData.notes ? (
+                  <p style={{ color: 'var(--color-text-light)', fontSize: '0.85rem', whiteSpace: 'pre-wrap', margin: 0 }}>{invoiceData.notes}</p>
+                ) : (
+                  <ul style={{ color: 'var(--color-text-light)', fontSize: '0.85rem', margin: 0, paddingLeft: '1rem' }}>
+                    <li style={{ marginBottom: '0.25rem' }}>Thank you for choosing Basii Studio for your design needs.</li>
+                    <li style={{ marginBottom: '0.25rem' }}>Payment is due upon receipt unless otherwise agreed.</li>
+                    <li>All designs remain property of Basii Studio until full payment is received.</li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>
 
-          {invoiceData.notes && (
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-              <h4 style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Notes</h4>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{invoiceData.notes}</p>
-            </div>
-          )}
+          {/* FOOTER */}
+          <div style={{ background: 'linear-gradient(90deg, #228B75, #10443E)', color: 'white', padding: '1rem', textAlign: 'center', marginTop: 'auto' }}>
+            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 'bold', fontSize: '0.9rem' }}>Basii Studio</p>
+            <p style={{ margin: 0, color: '#E6FFF8', fontSize: '0.75rem' }}>Graphic Design Services · Thank you for your business!</p>
+          </div>
           
         </div>
       </div>
