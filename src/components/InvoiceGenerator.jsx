@@ -20,7 +20,7 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
   });
 
   const [items, setItems] = useState([
-    { id: 1, description: 'Design Services', quantity: 1, rate: 0 }
+    { id: 1, description: 'Design Services', client: '', quantity: 1, rate: 0 }
   ]);
 
   useEffect(() => {
@@ -29,6 +29,7 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
       const newItems = projectsToLoad.map((p, index) => ({
         id: Date.now() + index,
         description: p.name || 'Project Name',
+        client: p.client || '',
         quantity: 1,
         rate: parseFloat(p.amount) || 0
       }));
@@ -75,7 +76,7 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
   };
 
   const addItem = () => {
-    setItems([...items, { id: Date.now(), description: '', quantity: 1, rate: 0 }]);
+    setItems([...items, { id: Date.now(), description: '', client: '', quantity: 1, rate: 0 }]);
   };
 
   const removeItem = (id) => {
@@ -179,6 +180,7 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
                       <option key={p.id} value={p.name}>{p.client ? `${p.name} - ${p.client}` : p.name}</option>
                     ))}
                   </datalist>
+                  <input type="text" className="input-field" placeholder="Client" style={{ flex: 1 }} value={item.client} onChange={(e) => handleItemChange(item.id, 'client', e.target.value)} />
                   <input type="number" className="input-field" placeholder="Qty" style={{ width: '60px' }} value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} />
                   <input type="number" className="input-field" placeholder="Rate" style={{ width: '80px' }} value={item.rate} onChange={(e) => handleItemChange(item.id, 'rate', parseFloat(e.target.value) || 0)} />
                   <button onClick={() => removeItem(item.id)} className="btn-icon" style={{ padding: '0.6rem', color: 'var(--color-danger)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
@@ -242,9 +244,10 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
                 <tr>
                   <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.8rem', width: '5%', borderTopLeftRadius: 'var(--radius-md)', borderBottomLeftRadius: 'var(--radius-md)' }}>#</th>
                   <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem' }}>Project / Description</th>
-                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.8rem', width: '15%' }}>Qty</th>
-                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'right', fontSize: '0.8rem', width: '20%' }}>Rate</th>
-                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'right', fontSize: '0.8rem', width: '20%', borderTopRightRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>Amount</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.8rem', width: '20%' }}>Client</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.8rem', width: '10%' }}>Qty</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'right', fontSize: '0.8rem', width: '15%' }}>Rate</th>
+                  <th style={{ backgroundColor: '#10443E', color: 'white', padding: '0.75rem 1rem', textAlign: 'right', fontSize: '0.8rem', width: '15%', borderTopRightRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)' }}>Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -252,6 +255,7 @@ const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => 
                   <tr key={item.id} style={{ backgroundColor: index % 2 === 0 ? '#F9FAFB' : 'transparent' }}>
                     <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem', borderBottom: '1px solid #E5E7EB' }}>{index + 1}</td>
                     <td style={{ padding: '1rem', fontWeight: '600', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>{item.description || 'Item description'}</td>
+                    <td style={{ padding: '1rem', color: 'var(--color-text-muted)', fontSize: '0.9rem', borderBottom: '1px solid #E5E7EB' }}>{item.client || '-'}</td>
                     <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>{item.quantity}</td>
                     <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>₹{item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     <td style={{ padding: '1rem', textAlign: 'right', color: 'var(--color-text-main)', borderBottom: '1px solid #E5E7EB' }}>₹{(item.quantity * item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
