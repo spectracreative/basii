@@ -2,9 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, CheckCircle, Briefcase, Calendar, DollarSign, Paintbrush, AlertTriangle, FileText, CheckSquare, Square, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import { printProjectBill } from '../utils/billPrint';
 
-const Projects = ({ projects, setProjects, clients, setClients, session, dateFilter, onPaymentReceived }) => {
+const Projects = ({ projects, setProjects, clients, setClients, session, dateFilter, onPaymentReceived, setInvoiceProjectsToLoad, setCurrentPage }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const handleResetProjects = async () => {
@@ -172,7 +171,11 @@ const Projects = ({ projects, setProjects, clients, setClients, session, dateFil
   const handlePrintSelected = () => {
     const selectedProjects = filteredProjects.filter(p => selectedIds.has(p.id));
     if (selectedProjects.length === 0) return;
-    printProjectBill(selectedProjects);
+    
+    if (setInvoiceProjectsToLoad && setCurrentPage) {
+      setInvoiceProjectsToLoad(selectedProjects);
+      setCurrentPage('invoice');
+    }
   };
 
   const handlePrintUnpaid = () => {
@@ -181,7 +184,11 @@ const Projects = ({ projects, setProjects, clients, setClients, session, dateFil
       alert('No unpaid projects to invoice.');
       return;
     }
-    printProjectBill(unpaidProjects);
+    
+    if (setInvoiceProjectsToLoad && setCurrentPage) {
+      setInvoiceProjectsToLoad(unpaidProjects);
+      setCurrentPage('invoice');
+    }
   };
 
   const selectedTotal = filteredProjects

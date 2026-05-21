@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Printer, FileText } from 'lucide-react';
 
-const InvoiceGenerator = ({ projects }) => {
+const InvoiceGenerator = ({ projects, projectsToLoad, clearProjectsToLoad }) => {
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000)}`,
     date: new Date().toISOString().split('T')[0],
@@ -22,6 +22,33 @@ const InvoiceGenerator = ({ projects }) => {
   const [items, setItems] = useState([
     { id: 1, description: 'Design Services', quantity: 1, rate: 0 }
   ]);
+
+  useEffect(() => {
+    if (projectsToLoad && projectsToLoad.length > 0) {
+      // Map loaded projects to invoice items
+      const newItems = projectsToLoad.map((p, index) => ({
+        id: Date.now() + index,
+        description: p.name || 'Project Name',
+        quantity: 1,
+        rate: parseFloat(p.amount) || 0
+      }));
+      setItems(newItems);
+
+      // Extract client details if available (use the first project's client)
+      const firstClient = projectsToLoad.find(p => p.client)?.client;
+      if (firstClient) {
+        setInvoiceData(prev => ({
+          ...prev,
+          billedTo: { ...prev.billedTo, name: firstClient }
+        }));
+      }
+
+      // Clear the prop so it doesn't reload indefinitely
+      if (clearProjectsToLoad) {
+        clearProjectsToLoad();
+      }
+    }
+  }, [projectsToLoad, clearProjectsToLoad]);
 
   const handleDataChange = (field, value) => {
     setInvoiceData(prev => ({ ...prev, [field]: value }));

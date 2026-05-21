@@ -18,6 +18,7 @@ const App = () => {
   const [session, setSession] = useState(null);
   const [dateFilter, setDateFilter] = useState({ type: 'all', value: null });
   const [currentPage, setCurrentPage] = useState('dashboard'); // 'dashboard' | 'earnings'
+  const [invoiceProjectsToLoad, setInvoiceProjectsToLoad] = useState(null);
   
   // Data State
   const [transactions, setTransactions] = useState([]);
@@ -220,6 +221,8 @@ const App = () => {
                 session={session} 
                 dateFilter={dateFilter} 
                 onPaymentReceived={handleAutoAddTransaction}
+                setInvoiceProjectsToLoad={setInvoiceProjectsToLoad}
+                setCurrentPage={setCurrentPage}
               />
             </motion.div>
           ) : currentPage === 'add' ? (
@@ -248,7 +251,11 @@ const App = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <InvoiceGenerator projects={projects} />
+              <InvoiceGenerator 
+                projects={projects} 
+                projectsToLoad={invoiceProjectsToLoad} 
+                clearProjectsToLoad={() => setInvoiceProjectsToLoad(null)} 
+              />
             </motion.div>
           ) : (
             <motion.div 
