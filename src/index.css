@@ -176,6 +176,7 @@ body {
 @media (max-width: 768px) {
   .container {
     padding: 1rem 0.5rem;
+    padding-bottom: 100px;
   }
   
   .card {
