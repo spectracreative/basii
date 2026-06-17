@@ -244,6 +244,17 @@ body {
    PRINT STYLES
 ========================================= */
 @media print {
+  @page {
+    size: A4;
+    margin: 0mm; /* Helps prevent extra blank pages and utilizes full space */
+  }
+
+  body {
+    background: white;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   /* Hide everything except the invoice preview */
   body * {
     visibility: hidden;
@@ -259,11 +270,30 @@ body {
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 1cm; /* Manage padding for print */
+    padding: 0;
     box-shadow: none;
     border: none;
-    min-height: 0; /* Remove fixed height to prevent extra blank pages */
+    min-height: auto !important; /* Override inline style */
     height: auto;
+  }
+
+  /* Compress spacing to ensure it fits on one page */
+  .invoice-preview > div:first-child {
+    padding: 1rem 2rem !important;
+  }
+  
+  .invoice-preview > div:nth-child(2) {
+    padding: 1.5rem !important;
+  }
+  
+  .invoice-preview > div:nth-child(2) > div:first-child,
+  .invoice-preview table,
+  .invoice-preview table + div {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .invoice-preview td, .invoice-preview th {
+    padding: 0.5rem 1rem !important;
   }
 
   /* Prevent page breaks inside table rows */
@@ -273,11 +303,6 @@ body {
 
   .no-print {
     display: none !important;
-  }
-  
-  /* Reset background for printing */
-  body {
-    background: white;
   }
   
   .bottom-nav {
